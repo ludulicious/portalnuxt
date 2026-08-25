@@ -28,6 +28,7 @@ async function signIn() {
         ><label class="field"
           >Password<input v-model="account.password" type="password" autocomplete="current-password"
         /></label>
+        <NuxtLink class="login-card__link" to="/forgot-password">Forgot password?</NuxtLink>
         <p v-if="error" class="helper helper--error">{{ error }}</p>
         <button class="btn btn--primary" :disabled="busy">{{ busy ? 'Logging in…' : 'Login' }}</button>
       </form>

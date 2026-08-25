@@ -934,6 +934,15 @@ main.main {
   padding: var(--space-xl);
   border: var(--rule-thin) solid var(--color-rule);
 }
+.login-card > * + * {
+  margin-block-start: var(--space-md);
+}
+.login-card__link {
+  width: fit-content;
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+  text-underline-offset: 0.2em;
+}
 .request-list {
   display: grid;
   gap: var(--space-sm);

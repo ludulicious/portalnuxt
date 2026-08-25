@@ -8,33 +8,45 @@ interface OutboxRow {
 
 function emailFor(row: OutboxRow) {
   const p = row.payload
+  const name = escapeEmailHtml(p.name)
+  const organization = escapeEmailHtml(p.organization)
   if (row.kind === 'access-request.received') {
     return {
       subject: 'We received your PortalNuxt request',
-      html: `<p>Hi ${p.name},</p><p>We received your request for ${p.organization}. Our team reviews every request manually and will contact you by email.</p><p>No account has been created.</p>`
+      html: renderPortalEmail(
+        `<p style="margin:0 0 18px">Hi ${name},</p><p style="margin:0 0 18px">We received your request for <strong>${organization}</strong>. Our team reviews every request manually and will contact you by email.</p><p style="margin:0">No account has been created.</p>`
+      )
     }
   }
   if (row.kind === 'access-request.admin') {
     return {
       subject: `New PortalNuxt request · ${p.organization}`,
-      html: `<p>${p.name} (${p.email}) requested a managed portal for <strong>${p.organization}</strong>.</p><p><a href="${p.url}">Review request</a></p>`
+      html: renderPortalEmail(
+        `<p style="margin:0">${name} (${escapeEmailHtml(p.email)}) requested a managed portal for <strong>${organization}</strong>.</p>${portalEmailButton('Review request', p.url)}`
+      )
     }
   }
   if (row.kind === 'access-request.approved') {
     return {
       subject: 'Your PortalNuxt request was approved',
-      html: `<p>Hi ${p.name},</p><p>Your request for ${p.organization} was approved. We will email you again when your dedicated portal is ready.</p>`
+      html: renderPortalEmail(
+        `<p style="margin:0 0 18px">Hi ${name},</p><p style="margin:0">Your request for <strong>${organization}</strong> was approved. We will email you again when your dedicated portal is ready.</p>`
+      )
     }
   }
   if (row.kind === 'access-request.declined') {
     return {
       subject: 'An update on your PortalNuxt request',
-      html: `<p>Hi ${p.name},</p><p>We are unable to offer a managed portal for ${p.organization} at this time.</p>${p.reason ? `<p>${p.reason}</p>` : ''}`
+      html: renderPortalEmail(
+        `<p style="margin:0 0 18px">Hi ${name},</p><p style="margin:0${p.reason ? ' 0 18px' : ''}">We are unable to offer a managed portal for <strong>${organization}</strong> at this time.</p>${p.reason ? `<p style="margin:0">${escapeEmailHtml(p.reason)}</p>` : ''}`
+      )
     }
   }
   return {
     subject: 'Your PortalNuxt portal is ready',
-    html: `<p>Hi ${p.name},</p><p>Your dedicated portal is ready at <a href="${p.url}">${p.url}</a>.</p><p>Create your administrator account using ${p.email}.</p>`
+    html: renderPortalEmail(
+      `<p style="margin:0 0 18px">Hi ${name},</p><p style="margin:0">Your dedicated portal is ready.</p>${portalEmailButton('Open your portal', p.url)}<p style="margin:0">Create your administrator account using <strong>${escapeEmailHtml(p.email)}</strong>.</p>`
+    )
   }
 }
 

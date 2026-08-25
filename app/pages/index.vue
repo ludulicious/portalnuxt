@@ -1,7 +1,7 @@
 <script setup lang="ts">
 useSeoMeta({
-  title: 'Managed open-source customer portals',
-  description: 'Dedicated, managed Nuxt Customer Portal instances for selected organizations.'
+  title: 'Customer Portal Evaluations',
+  description: 'Evaluate the Nuxt Customer Portal for your organization.'
 })
 </script>
 <template>
@@ -12,10 +12,8 @@ useSeoMeta({
       <div class="public-hero__lede">
         <p>A dedicated Nuxt Customer Portal, operated for your organization.</p>
         <div class="public-hero__actions">
-          <a class="btn btn--primary" href="#request-access">Request access</a
-          ><a class="public-hero__source" href="https://nuxt-customer-portal.com" target="_blank" rel="noreferrer"
-            >Nuxt Customer Portal ↗</a
-          >
+          <a class="btn btn--primary" href="#request-access">Request access</a><a class="public-hero__source"
+            href="https://nuxt-customer-portal.com" target="_blank" rel="noreferrer">Nuxt Customer Portal ↗</a>
         </div>
       </div>
     </section>
