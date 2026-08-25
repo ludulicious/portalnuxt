@@ -1,8 +1,0 @@
-{
-  "date": "2026-08-08",
-  "framework": "Nuxt 4 with Nuxt UI 4 and Tailwind CSS 4",
-  "font_stack": "Public Sans body; Space Grotesk Variable marketing display",
-  "palette": "Customer Portal cyan and violet brand tokens",
-  "motion": "motion-cut; CSS state transitions only",
-  "spacing": "4-point semantic token scale"
-}
