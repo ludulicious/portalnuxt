@@ -1,31 +1,92 @@
-# Nuxt dev/build outputs
-.output
-.data
-.nuxt
-.nitro
-.cache
-dist
+### macOS
+# Finder metadata
+.DS_Store
 
-# Node dependencies
-node_modules
+# Thumbnails
+._*
+
+# Custom folder icons
+Icon
+
+# Volume root files
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+### JetBrains
+# JetBrains IDE directory
+.idea/
+
+# CMake build directories
+cmake-build-*/
+
+# File-based project format
+*.iws
+*.iml
+
+# IntelliJ build output
+out/
+
+### VS Code
+# VSCode settings (keep shared configuration)
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+### Node
+# Dependencies
+node_modules/
 
 # Logs
-logs
 *.log
 
-# Misc
-.DS_Store
-.fleet
-.idea
+# Runtime data
+*.pid
+*.pid.lock
 
-# Local env files
+# Coverage
+coverage/
+*.lcov
+.nyc_output
+
+# Build output
+dist/
+build/Release
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Framework build output and caches
+.cache
+.parcel-cache
+.next
+out/
+.nuxt
+.output
+
+# dotenv environment variable files
 .env
-.env.*
-!.env.example
+.env.local
+.env.*.local
 
-# VSC
-.history
+# npm cache directory
+.npm
+*.tgz
 
-# Playwright
-playwright-report/
-test-results/
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/install-state.gz
+.pnp.*

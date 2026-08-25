@@ -1,0 +1,40 @@
+{
+  "name": "nuxt-customer-portal-saas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "format": "prettier --write . && eslint . --fix && prettier --write . && eslint .",
+    "format:check": "prettier --check . && eslint .",
+    "lint": "eslint .",
+    "migrate": "tsx scripts/migrate.ts",
+    "operator:create": "tsx scripts/create-operator.ts",
+    "postinstall": "nuxt prepare",
+    "start": "node .output/server/index.mjs",
+    "test": "node --import tsx --test test/*.test.ts",
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@nuxt/ui": "^4.10.0",
+    "@pinia/nuxt": "^1.0.1",
+    "better-auth": "1.6.25",
+    "nuxt": "^4.5.1",
+    "pg": "^8.16.3",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@nuxt/eslint": "^1.16.0",
+    "@types/node": "^24.10.1",
+    "@types/pg": "^8.15.6",
+    "eslint": "^10.8.0",
+    "eslint-config-prettier": "^10.1.8",
+    "prettier": "^3.9.6",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.4"
+  },
+  "packageManager": "pnpm@10.19.0"
+}
