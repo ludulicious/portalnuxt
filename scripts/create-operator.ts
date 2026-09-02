@@ -7,8 +7,8 @@ try {
   loadEnvFile()
 } catch (error) {
   if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-throw error
-}
+    throw error
+  }
 }
 const email = String(process.argv[2] || '')
   .trim()
@@ -19,13 +19,13 @@ const allowed = String(process.env.OPERATOR_EMAILS || '')
   .split(',')
   .map((value) => value.trim().toLowerCase())
 if (!email || !allowed.includes(email)) {
-throw new Error('Email must be present in OPERATOR_EMAILS')
+  throw new Error('Email must be present in OPERATOR_EMAILS')
 }
 if (password.length < 12) {
-throw new Error('Use a password of at least 12 characters')
+  throw new Error('Use a password of at least 12 characters')
 }
 if (!process.env.DATABASE_URL) {
-throw new Error('DATABASE_URL is required')
+  throw new Error('DATABASE_URL is required')
 }
 const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 try {

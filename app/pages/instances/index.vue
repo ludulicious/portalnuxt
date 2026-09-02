@@ -428,31 +428,61 @@ onBeforeUnmount(() => {
         </div>
         <div class="operator-header-actions">
           <UButton icon="i-lucide-plus" label="Add instance" @click="openCreateDialog" />
-          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-refresh-cw" class="operator-refresh"
-            :loading="isRefreshingReleases" :disabled="isRefreshingReleases" aria-label="Refresh inventory"
-            @click="refreshInventory" />
+          <UButton
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            icon="i-lucide-refresh-cw"
+            class="operator-refresh"
+            :loading="isRefreshingReleases"
+            :disabled="isRefreshingReleases"
+            aria-label="Refresh inventory"
+            @click="refreshInventory"
+          />
         </div>
         <span class="sr-only" aria-live="polite">{{
           isRefreshingReleases ? 'Refreshing portal inventory and releases' : ''
         }}</span>
       </header>
       <div class="operator-controls" aria-label="Inventory controls">
-        <UInput v-model="search" icon="i-lucide-search" placeholder="Search portals" aria-label="Search portals"
-          :loading="listPending" clearable class="min-w-0 flex-1 md:max-w-xs" />
+        <UInput
+          v-model="search"
+          icon="i-lucide-search"
+          placeholder="Search portals"
+          aria-label="Search portals"
+          :loading="listPending"
+          clearable
+          class="min-w-0 flex-1 md:max-w-xs"
+        />
         <template v-if="!isMobile">
-          <USelect v-model="status" :items="statusOptions" value-key="value" label-key="label"
-            aria-label="Filter by status" class="w-44" />
-          <USelect v-model="version" :items="versionFilterOptions" value-key="value" label-key="label"
-            aria-label="Filter by deployed version" class="w-40" />
+          <USelect
+            v-model="status"
+            :items="statusOptions"
+            value-key="value"
+            label-key="label"
+            aria-label="Filter by status"
+            class="w-44"
+          />
+          <USelect
+            v-model="version"
+            :items="versionFilterOptions"
+            value-key="value"
+            label-key="label"
+            aria-label="Filter by deployed version"
+            class="w-40"
+          />
           <UDropdownMenu :items="sortMenuItems" :content="{ align: 'end' }">
             <UButton variant="outline" icon="i-lucide-arrow-down-up" class="ml-auto w-44 justify-between">
               <span class="truncate">{{ selectedSortLabel }}</span>
               <UIcon name="i-lucide-chevron-down" class="size-4 opacity-60" />
             </UButton>
           </UDropdownMenu>
-          <UButton variant="outline"
+          <UButton
+            variant="outline"
             :icon="direction === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow'"
-            :aria-label="direction === 'asc' ? 'Ascending' : 'Descending'" @click="toggleSortDirection" />
+            :aria-label="direction === 'asc' ? 'Ascending' : 'Descending'"
+            @click="toggleSortDirection"
+          />
         </template>
         <template v-else>
           <UButton variant="outline" icon="i-lucide-filter" aria-label="Filters" @click="showFilters = true" />
@@ -466,8 +496,13 @@ onBeforeUnmount(() => {
               <USelect v-model="status" :items="statusOptions" value-key="value" label-key="label" class="w-full" />
             </UFormField>
             <UFormField label="Deployed version">
-              <USelect v-model="version" :items="versionFilterOptions" value-key="value" label-key="label"
-                class="w-full" />
+              <USelect
+                v-model="version"
+                :items="versionFilterOptions"
+                value-key="value"
+                label-key="label"
+                class="w-full"
+              />
             </UFormField>
           </div>
         </template>
@@ -478,9 +513,12 @@ onBeforeUnmount(() => {
             <UFormField label="Sort by">
               <USelect v-model="sort" :items="sortOptions" value-key="value" label-key="label" class="w-full" />
             </UFormField>
-            <UButton block variant="outline"
+            <UButton
+              block
+              variant="outline"
               :icon="direction === 'asc' ? 'i-lucide-arrow-up-narrow-wide' : 'i-lucide-arrow-down-wide-narrow'"
-              @click="toggleSortDirection">
+              @click="toggleSortDirection"
+            >
               {{ direction === 'asc' ? 'Ascending' : 'Descending' }}
             </UButton>
           </div>
@@ -495,18 +533,25 @@ onBeforeUnmount(() => {
       <div v-else-if="instances.length" class="operator-grid">
         <article v-for="instance in instances" :key="instance.id" class="operator-item">
           <div class="operator-item__meta">
-            <span>{{ instance.status }}</span><span>{{ instance.step }}</span>
+            <span>{{ instance.status }}</span
+            ><span>{{ instance.step }}</span>
           </div>
           <h3>{{ instance.name }}</h3>
           <p>
-            <a class="operator-item__domain" :href="portalUrl(instance.domain)" target="_blank"
-              rel="noopener noreferrer">
+            <a
+              class="operator-item__domain"
+              :href="portalUrl(instance.domain)"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               {{ instance.domain }}
               <UIcon name="i-lucide-external-link" />
             </a>
           </p>
           <p class="release-status">
-            <span>Deployed: <strong>{{ instance.deployedVersion || 'Unknown legacy release' }}</strong></span>
+            <span
+              >Deployed: <strong>{{ instance.deployedVersion || 'Unknown legacy release' }}</strong></span
+            >
             <span v-if="latest && instance.deployedVersion !== latest" class="release-update-available">
               <UIcon name="i-lucide-arrow-up-circle" />
               <strong>Update available</strong>
@@ -516,17 +561,26 @@ onBeforeUnmount(() => {
               <UIcon name="i-lucide-circle-check" /> Latest release
             </span>
           </p>
-          <div v-if="isDeploying(instance) || instance.status === 'ERROR'" class="deployment-progress"
-            :data-state="instance.status === 'ERROR' ? 'error' : 'running'" aria-live="polite">
+          <div
+            v-if="isDeploying(instance) || instance.status === 'ERROR'"
+            class="deployment-progress"
+            :data-state="instance.status === 'ERROR' ? 'error' : 'running'"
+            aria-live="polite"
+          >
             <div class="deployment-progress__header">
               <span>
-                <UIcon v-if="isDeploying(instance)" name="i-lucide-loader-circle"
-                  class="deployment-progress__spinner" />{{
-                    progressLabel(instance) }}
-              </span><strong>{{ instance.status === 'ERROR' ? 'Failed' : `${progress(instance)}%` }}</strong>
+                <UIcon
+                  v-if="isDeploying(instance)"
+                  name="i-lucide-loader-circle"
+                  class="deployment-progress__spinner"
+                />{{ progressLabel(instance) }} </span
+              ><strong>{{ instance.status === 'ERROR' ? 'Failed' : `${progress(instance)}%` }}</strong>
             </div>
-            <UProgress :model-value="instance.status === 'ERROR' ? 100 : progress(instance)"
-              :color="instance.status === 'ERROR' ? 'error' : 'primary'" size="sm" />
+            <UProgress
+              :model-value="instance.status === 'ERROR' ? 100 : progress(instance)"
+              :color="instance.status === 'ERROR' ? 'error' : 'primary'"
+              size="sm"
+            />
             <div class="deployment-progress__steps">
               <span v-for="step in deploymentSteps" :key="step" :data-active="step === instance.step">{{
                 step === 'ENVIRONMENT' ? 'Config' : step.charAt(0) + step.slice(1).toLowerCase()
@@ -534,18 +588,29 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <div class="form__actions operator-item__actions">
-            <UButton color="primary" variant="outline" :loading="busy === instance.id || isDeploying(instance)"
-              :disabled="!releaseOptions.length || isDeploying(instance)" @click="openDeploymentDialog(instance)">{{
+            <UButton
+              color="primary"
+              variant="outline"
+              :loading="busy === instance.id || isDeploying(instance)"
+              :disabled="!releaseOptions.length || isDeploying(instance)"
+              @click="openDeploymentDialog(instance)"
+              >{{
                 isDeploying(instance)
                   ? 'Deploying…'
                   : latest === instance.deployedVersion
                     ? 'Redeploy'
                     : 'Deploy release'
-              }}</UButton>
+              }}</UButton
+            >
             <div class="operator-item__more-actions">
               <UDropdownMenu :items="instanceActionItems(instance)" :content="{ align: 'end' }">
-                <UButton color="neutral" variant="outline" icon="i-lucide-ellipsis-vertical"
-                  aria-label="More instance actions" :disabled="busy === instance.id || isDeploying(instance)" />
+                <UButton
+                  color="neutral"
+                  variant="outline"
+                  icon="i-lucide-ellipsis-vertical"
+                  aria-label="More instance actions"
+                  :disabled="busy === instance.id || isDeploying(instance)"
+                />
               </UDropdownMenu>
             </div>
           </div>
@@ -561,24 +626,47 @@ onBeforeUnmount(() => {
         <UIcon name="i-lucide-loader-circle" />
         <span>{{ instances.length ? 'Loading more portals…' : 'Loading portals…' }}</span>
       </div>
-      <UButton v-else-if="pagination.hasNext" color="neutral" variant="ghost" class="operator-load-more"
-        @click="loadNextPage">
+      <UButton
+        v-else-if="pagination.hasNext"
+        color="neutral"
+        variant="ghost"
+        class="operator-load-more"
+        @click="loadNextPage"
+      >
         Load more
       </UButton>
-      <UPagination v-if="pagination.totalPages > 1" :page="pagination.page" :items-per-page="pagination.pageSize"
-        :total="pagination.totalItems" class="operator-pagination" aria-label="Inventory pages"
-        @update:page="goToPage" />
+      <UPagination
+        v-if="pagination.totalPages > 1"
+        :page="pagination.page"
+        :items-per-page="pagination.pageSize"
+        :total="pagination.totalItems"
+        class="operator-pagination"
+        aria-label="Inventory pages"
+        @update:page="goToPage"
+      />
     </section>
-    <ConfirmationModal v-if="createDialogOpen" v-model:is-open="createDialogOpen" title="Provision a new instance"
-      description="Enter the portal details. Provisioning starts after confirmation." confirm-label="Provision instance"
-      :loading="createBusy" :confirm-disabled="createDisabled" @confirm="createInstance">
+    <ConfirmationModal
+      v-if="createDialogOpen"
+      v-model:is-open="createDialogOpen"
+      title="Provision a new instance"
+      description="Enter the portal details. Provisioning starts after confirmation."
+      confirm-label="Provision instance"
+      :loading="createBusy"
+      :confirm-disabled="createDisabled"
+      @confirm="createInstance"
+    >
       <div class="instance-create-form">
         <UFormField label="Instance name" name="name" required>
           <UInput v-model="createForm.name" class="w-full" autocomplete="organization" />
         </UFormField>
         <UFormField label="Portal slug" name="slug" required>
-          <UInput v-model="createForm.slug" class="w-full" placeholder="example-company" autocomplete="off"
-            :spellcheck="false" />
+          <UInput
+            v-model="createForm.slug"
+            class="w-full"
+            placeholder="example-company"
+            autocomplete="off"
+            :spellcheck="false"
+          />
         </UFormField>
         <UFormField label="Tenant administrator" name="adminEmail" required>
           <UInput v-model="createForm.adminEmail" class="w-full" type="email" autocomplete="email" />
@@ -587,11 +675,16 @@ onBeforeUnmount(() => {
         <p v-if="createError" class="helper helper--error" role="alert">{{ createError }}</p>
       </div>
     </ConfirmationModal>
-    <ConfirmationModal v-if="deploymentTarget" v-model:is-open="deploymentDialogOpen"
+    <ConfirmationModal
+      v-if="deploymentTarget"
+      v-model:is-open="deploymentDialogOpen"
       :title="`Deploy release to ${deploymentTarget.name}`"
       description="Choose the portal version to deploy. Deployment starts after confirmation."
-      confirm-label="Confirm deployment" :loading="busy === deploymentTarget.id" :confirm-disabled="!deploymentVersion"
-      @confirm="deploy">
+      confirm-label="Confirm deployment"
+      :loading="busy === deploymentTarget.id"
+      :confirm-disabled="!deploymentVersion"
+      @confirm="deploy"
+    >
       <div class="deployment-confirmation">
         <p>
           Current version:
@@ -599,16 +692,29 @@ onBeforeUnmount(() => {
         </p>
         <div class="field">
           <label for="deployment-release">Release</label>
-          <USelect id="deployment-release" v-model="deploymentVersion" :items="deploymentReleaseOptions"
-            value-key="value" label-key="label" placeholder="Select a release" class="w-full" />
+          <USelect
+            id="deployment-release"
+            v-model="deploymentVersion"
+            :items="deploymentReleaseOptions"
+            value-key="value"
+            label-key="label"
+            placeholder="Select a release"
+            class="w-full"
+          />
         </div>
       </div>
     </ConfirmationModal>
-    <ConfirmationModal v-if="actionTarget && pendingAction" v-model:is-open="actionDialogOpen"
-      :title="actionDialogTitle" :description="actionDialogDescription"
+    <ConfirmationModal
+      v-if="actionTarget && pendingAction"
+      v-model:is-open="actionDialogOpen"
+      :title="actionDialogTitle"
+      :description="actionDialogDescription"
       :confirm-label="pendingAction === 'suspend' ? 'Suspend portal' : 'Schedule deletion'"
-      :confirm-color="pendingAction === 'schedule-deletion' ? 'error' : 'primary'" :loading="busy === actionTarget.id"
-      :confirm-disabled="actionConfirmDisabled" @confirm="confirmInstanceAction">
+      :confirm-color="pendingAction === 'schedule-deletion' ? 'error' : 'primary'"
+      :loading="busy === actionTarget.id"
+      :confirm-disabled="actionConfirmDisabled"
+      @confirm="confirmInstanceAction"
+    >
       <div class="action-confirmation">
         <p>
           Portal: <strong>{{ actionTarget.domain }}</strong>
@@ -617,8 +723,14 @@ onBeforeUnmount(() => {
           <label for="delete-confirmation-slug">
             Type <strong>{{ actionTarget.slug }}</strong> to confirm
           </label>
-          <UInput id="delete-confirmation-slug" v-model="deleteConfirmationSlug" :placeholder="actionTarget.slug"
-            autocomplete="off" :spellcheck="false" class="w-full" />
+          <UInput
+            id="delete-confirmation-slug"
+            v-model="deleteConfirmationSlug"
+            :placeholder="actionTarget.slug"
+            autocomplete="off"
+            :spellcheck="false"
+            class="w-full"
+          />
         </div>
       </div>
     </ConfirmationModal>

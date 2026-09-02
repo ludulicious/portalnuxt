@@ -155,11 +155,17 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       `UPDATE platform_instance SET status='ACTIVE', provisioning_step='COMPLETE', deployed_image=desired_image, deployed_version=desired_version, locked_at=NULL, updated_at=now() WHERE id=$1`,
       [instanceId]
     )
-    const request = await pool.query(`UPDATE access_request SET status='PROVISIONED',updated_at=now() WHERE instance_id=$1 AND status='PROVISIONING' RETURNING *`, [instanceId])
+    const request = await pool.query(
+      `UPDATE access_request SET status='PROVISIONED',updated_at=now() WHERE instance_id=$1 AND status='PROVISIONING' RETURNING *`,
+      [instanceId]
+    )
     if (request.rows[0]) {
       const row = request.rows[0]
       await queueNotification(pool, `${row.id}:provisioned`, 'access-request.provisioned', row.email, {
-        name: row.name, organization: row.organization, email: instance.adminEmail, url: `https://${instance.domain}`
+        name: row.name,
+        organization: row.organization,
+        email: instance.adminEmail,
+        url: `https://${instance.domain}`
       })
     }
   } else {

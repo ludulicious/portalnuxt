@@ -173,11 +173,7 @@ onMounted(() => {
         <span>Confirm both items before sending your request.</span>
       </div>
       <UFormField class="request-form__agreement" name="consent">
-        <UCheckbox
-          v-model="state.consent"
-          size="lg"
-          label="PortalNuxt may contact me about this access request."
-        />
+        <UCheckbox v-model="state.consent" size="lg" label="PortalNuxt may contact me about this access request." />
       </UFormField>
       <UFormField class="request-form__agreement" name="termsAccepted">
         <UCheckbox v-model="state.termsAccepted" size="lg">
