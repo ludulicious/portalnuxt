@@ -69,7 +69,7 @@ async function submit(event: FormSubmitEvent<AccessRequestInput>) {
 
 async function onValidationError(event: FormErrorEvent) {
   const firstError = event.errors[0]
-  error.value = firstError?.message || 'Check the highlighted fields and try again.'
+  error.value = ''
 
   await nextTick()
   if (firstError?.id) {
@@ -146,15 +146,17 @@ onMounted(() => {
           class="w-full"
         />
       </UFormField>
-      <UFormField label="Preferred portal address" name="preferredSlug" hint="Suggested, not reserved">
+      <UFormField
+        class="request-form__wide"
+        label="Preferred portal address"
+        name="preferredSlug"
+        hint="Suggested, not reserved"
+      >
         <UInput v-model="state.preferredSlug" autocomplete="off" :spellcheck="false" class="w-full">
           <template #trailing>
             <span class="request-form__domain">.{{ config.public.portalBaseDomain || 'portalnuxt.com' }}</span>
           </template>
         </UInput>
-      </UFormField>
-      <UFormField label="Additional context" name="notes" hint="Optional">
-        <UTextarea v-model="state.notes" :rows="3" class="w-full" />
       </UFormField>
     </div>
 
@@ -165,12 +167,20 @@ onMounted(() => {
       <div v-if="config.public.turnstileSiteKey" class="cf-turnstile" :data-sitekey="config.public.turnstileSiteKey" />
     </ClientOnly>
 
-    <div class="request-form__agreements">
-      <UFormField name="consent">
-        <UCheckbox v-model="state.consent" label="PortalNuxt may contact me about this access request." />
+    <div class="request-form__agreements" role="group" aria-labelledby="required-confirmations">
+      <div class="request-form__agreements-head">
+        <strong id="required-confirmations">Required confirmations</strong>
+        <span>Confirm both items before sending your request.</span>
+      </div>
+      <UFormField class="request-form__agreement" name="consent">
+        <UCheckbox
+          v-model="state.consent"
+          size="lg"
+          label="PortalNuxt may contact me about this access request."
+        />
       </UFormField>
-      <UFormField name="termsAccepted">
-        <UCheckbox v-model="state.termsAccepted">
+      <UFormField class="request-form__agreement" name="termsAccepted">
+        <UCheckbox v-model="state.termsAccepted" size="lg">
           <template #label>
             I agree to the
             <NuxtLink class="request-form__terms-link" to="/terms" target="_blank">Terms of Service</NuxtLink>.
