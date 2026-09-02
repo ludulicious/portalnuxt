@@ -21,6 +21,8 @@ test('access requests normalize email and slug while requiring qualification and
   })
   assert.equal(parsed.email, 'ada@example.com')
   assert.equal(parsed.preferredSlug, 'analytical-engines')
+  assert.equal(parsed.contactCode, '')
+  assert.equal(accessRequestInputSchema.safeParse({ ...parsed, contactCode: 'bot-filled' }).success, true)
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, consent: false }).success, false)
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, termsAccepted: false }).success, false)
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, intendedUse: 'Too short' }).success, false)

@@ -16,7 +16,7 @@ const state = reactive<AccessRequestInput>({
   consent: false,
   termsAccepted: false,
   turnstileToken: '',
-  company: ''
+  contactCode: ''
 })
 const expectedUserOptions = [
   { label: '1–10', value: '1-10' },
@@ -158,8 +158,8 @@ onMounted(() => {
       </UFormField>
     </div>
 
-    <UFormField class="request-form__honeypot" label="Company" name="company">
-      <UInput v-model="state.company" tabindex="-1" autocomplete="off" />
+    <UFormField class="request-form__honeypot" label="Contact code" name="contactCode" aria-hidden="true">
+      <UInput v-model="state.contactCode" tabindex="-1" autocomplete="one-time-code" />
     </UFormField>
     <ClientOnly>
       <div v-if="config.public.turnstileSiteKey" class="cf-turnstile" :data-sitekey="config.public.turnstileSiteKey" />

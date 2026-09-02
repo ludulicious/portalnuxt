@@ -3,7 +3,7 @@ import { accessRequestInputSchema } from '../../../shared/access-requests'
 
 export default defineEventHandler(async (event) => {
   const input = accessRequestInputSchema.parse(await readBody(event))
-  if (input.company) {
+  if (input.contactCode) {
     return { accepted: true }
   }
   const id = randomUUID()

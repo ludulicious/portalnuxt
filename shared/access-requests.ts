@@ -41,7 +41,7 @@ export const accessRequestInputSchema = z.object({
   consent: z.boolean().refine((value) => value, 'Please confirm that PortalNuxt may contact you about this request.'),
   termsAccepted: z.boolean().refine((value) => value, 'Please agree to the Terms of Service before submitting.'),
   turnstileToken: z.string().max(4096).optional().default(''),
-  company: z.string().max(0).optional().default('')
+  contactCode: z.string().max(200).optional().default('')
 })
 export type AccessRequestInput = z.infer<typeof accessRequestInputSchema>
 
