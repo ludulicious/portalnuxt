@@ -103,6 +103,14 @@ onBeforeUnmount(() => {
               <NuxtLink class="profile__item" role="menuitem" to="/instances" @click="profileOpen = false"
                 >Instances</NuxtLink
               >
+              <NuxtLink
+                v-if="operator"
+                class="profile__item"
+                role="menuitem"
+                to="/access-requests"
+                @click="profileOpen = false"
+                >Access requests</NuxtLink
+              >
               <button
                 class="profile__item profile__item--logout"
                 role="menuitem"

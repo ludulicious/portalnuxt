@@ -4,6 +4,11 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-10-24',
   css: ['~/assets/css/main.css'],
   modules: ['@nuxt/eslint', '@nuxt/ui', '@pinia/nuxt'],
+  icon: {
+    clientBundle: {
+      scan: true
+    }
+  },
   runtimeConfig: {
     databaseUrl: process.env.DATABASE_URL,
     betterAuthSecret: process.env.BETTER_AUTH_SECRET,
