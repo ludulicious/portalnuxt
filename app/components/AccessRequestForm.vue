@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { FormSubmitEvent } from '@nuxt/ui'
+import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
 import { accessRequestInputSchema, type AccessRequestInput } from '~~/shared/access-requests'
 
 const config = useRuntimeConfig()
@@ -67,6 +67,16 @@ async function submit(event: FormSubmitEvent<AccessRequestInput>) {
   }
 }
 
+async function onValidationError(event: FormErrorEvent) {
+  const firstError = event.errors[0]
+  error.value = firstError?.message || 'Check the highlighted fields and try again.'
+
+  await nextTick()
+  if (firstError?.id) {
+    document.getElementById(firstError.id)?.focus()
+  }
+}
+
 onMounted(() => {
   if (config.public.turnstileSiteKey && !document.querySelector('script[data-portalnuxt-turnstile]')) {
     const script = document.createElement('script')
@@ -89,7 +99,14 @@ onMounted(() => {
       </p>
     </div>
   </div>
-  <UForm v-else class="request-form" :schema="accessRequestInputSchema" :state="state" @submit="submit">
+  <UForm
+    v-else
+    class="request-form"
+    :schema="accessRequestInputSchema"
+    :state="state"
+    @submit="submit"
+    @error="onValidationError"
+  >
     <div class="request-form__grid">
       <UFormField label="Full name" name="name" required>
         <UInput v-model="state.name" autocomplete="name" class="w-full" />

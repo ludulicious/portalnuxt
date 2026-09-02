@@ -6,6 +6,8 @@ export default defineEventHandler(async (event) => {
   if (input.company) {
     return { accepted: true }
   }
+  const id = randomUUID()
+  console.info('Access request submission started', { requestId: id })
   const config = useRuntimeConfig()
   const ip = getRequestIP(event, { xForwardedFor: true }) || 'unknown'
   if (config.turnstileSecretKey) {
@@ -19,6 +21,7 @@ export default defineEventHandler(async (event) => {
     })
     const result = (await response.json()) as { success?: boolean }
     if (!result.success) {
+      console.warn('Access request security verification failed', { requestId: id })
       throw createError({ statusCode: 400, statusMessage: 'Security verification failed' })
     }
   } else if (process.env.NODE_ENV === 'production') {
@@ -31,9 +34,9 @@ export default defineEventHandler(async (event) => {
     [networkHash]
   )
   if (Number(limited.rows[0]?.count || 0) >= 5) {
+    console.warn('Access request rate limit exceeded', { requestId: id })
     throw createError({ statusCode: 429, statusMessage: 'Too many requests. Try again later.' })
   }
-  const id = randomUUID()
   const client = await pool.connect()
   try {
     await client.query('BEGIN')
@@ -75,9 +78,11 @@ export default defineEventHandler(async (event) => {
     await client.query('COMMIT')
   } catch (error) {
     await client.query('ROLLBACK')
+    console.error('Access request persistence failed', { requestId: id })
     throw error
   } finally {
     client.release()
   }
+  console.info('Access request submission accepted', { requestId: id })
   return { accepted: true }
 })
