@@ -24,6 +24,11 @@ useHead({
   ]
 })
 
+const route = useRoute()
+const isHome = computed(() => {
+  const path = route.path || '/'
+  return path === '/'
+})
 const profile = useTemplateRef<HTMLElement>('profile')
 const profileOpen = ref(false)
 const signingOut = ref(false)
@@ -62,64 +67,64 @@ onBeforeUnmount(() => {
 <template>
   <UApp>
     <div class="shell">
-      <header class="nav">
+      <header class="nav" :class="{ 'nav--home': isHome }">
         <div class="nav__inner">
           <NuxtLink class="nav__brand" to="/"><PortalLogoMark />PortalNuxt</NuxtLink>
-          <nav v-if="operator" class="nav__links" aria-label="Primary">
-            <NuxtLink class="nav__link" to="/instances">Instances</NuxtLink>
-            <NuxtLink class="nav__link" to="/access-requests">Access requests</NuxtLink>
-          </nav>
-          <nav v-else class="nav__links" aria-label="Primary">
-            <a class="nav__link" href="/#request-access">Request access</a
-            ><a class="nav__link" href="https://github.com/ludulicious/nuxt-customer-portal">Open source</a>
-          </nav>
-          <UButton
-            v-if="!user"
-            to="/login"
-            color="neutral"
-            variant="outline"
-            size="sm"
-            icon="i-lucide-log-in"
-            label="Login"
-          />
-          <UColorModeButton class="color-mode-toggle" variant="outline" size="lg" />
-          <div v-if="user" ref="profile" class="profile">
-            <button
-              class="profile__trigger"
-              type="button"
-              :aria-expanded="profileOpen"
-              aria-haspopup="menu"
-              aria-label="Open profile menu"
-              @click.stop="profileOpen = !profileOpen"
-            >
-              <span class="profile__avatar" aria-hidden="true">{{ initials }}</span>
-              <span class="profile__chevron" aria-hidden="true">⌄</span>
-            </button>
-            <div v-if="profileOpen" class="profile__menu" role="menu">
-              <div class="profile__identity">
-                <strong>{{ user.name || 'Platform user' }}</strong>
-                <span>{{ user.email }}</span>
+          <div class="nav__toolbar">
+            <nav v-if="operator" class="nav__links" aria-label="Primary">
+              <NuxtLink class="nav__link" to="/instances">Instances</NuxtLink>
+              <NuxtLink class="nav__link" to="/access-requests">Access requests</NuxtLink>
+            </nav>
+            <div class="nav__actions">
+              <UButton
+                v-if="!user"
+                to="/login"
+                color="neutral"
+                variant="outline"
+                size="sm"
+                icon="i-lucide-log-in"
+                label="Login"
+              />
+              <UColorModeButton class="color-mode-toggle" variant="outline" size="sm" />
+              <div v-if="user" ref="profile" class="profile">
+                <button
+                  class="profile__trigger"
+                  type="button"
+                  :aria-expanded="profileOpen"
+                  aria-haspopup="menu"
+                  aria-label="Open profile menu"
+                  @click.stop="profileOpen = !profileOpen"
+                >
+                  <span class="profile__avatar" aria-hidden="true">{{ initials }}</span>
+                  <span class="profile__chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div v-if="profileOpen" class="profile__menu" role="menu">
+                  <div class="profile__identity">
+                    <strong>{{ user.name || 'Platform user' }}</strong>
+                    <span>{{ user.email }}</span>
+                  </div>
+                  <NuxtLink class="profile__item" role="menuitem" to="/instances" @click="profileOpen = false"
+                    >Instances</NuxtLink
+                  >
+                  <NuxtLink
+                    v-if="operator"
+                    class="profile__item"
+                    role="menuitem"
+                    to="/access-requests"
+                    @click="profileOpen = false"
+                    >Access requests</NuxtLink
+                  >
+                  <button
+                    class="profile__item profile__item--logout"
+                    role="menuitem"
+                    type="button"
+                    :disabled="signingOut"
+                    @click="signOut"
+                  >
+                    {{ signingOut ? 'Logging out…' : 'Logout' }}
+                  </button>
+                </div>
               </div>
-              <NuxtLink class="profile__item" role="menuitem" to="/instances" @click="profileOpen = false"
-                >Instances</NuxtLink
-              >
-              <NuxtLink
-                v-if="operator"
-                class="profile__item"
-                role="menuitem"
-                to="/access-requests"
-                @click="profileOpen = false"
-                >Access requests</NuxtLink
-              >
-              <button
-                class="profile__item profile__item--logout"
-                role="menuitem"
-                type="button"
-                :disabled="signingOut"
-                @click="signOut"
-              >
-                {{ signingOut ? 'Logging out…' : 'Logout' }}
-              </button>
             </div>
           </div>
         </div>

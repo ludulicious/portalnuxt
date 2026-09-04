@@ -16,6 +16,15 @@ export const DESIRED_TIMELINES = ['exploring', '1-month', '1-3-months', '3-month
 const optionalUrl = z.union([z.literal(''), z.url('Enter a complete URL, including https://.')]).optional()
 const optionalText = (maximum: number) => z.string().trim().max(maximum).optional().default('')
 
+export function toPortalSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 63)
+}
+
 export const accessRequestInputSchema = z.object({
   name: z.string().trim().min(2, 'Enter your full name.').max(120),
   email: z.email('Enter a valid work email address.').trim().toLowerCase().max(320),

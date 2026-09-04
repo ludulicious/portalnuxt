@@ -1,70 +1,86 @@
 <script setup lang="ts">
+import { toPortalSlug } from '~~/shared/access-requests'
+
+const config = useRuntimeConfig()
+const portalHost = computed(() => config.public.portalBaseDomain || 'portalnuxt.com')
+const preview = reactive({ preferredSlug: '', organization: '', requested: false })
+const plateSlug = computed(() => toPortalSlug(preview.preferredSlug) || 'your-org')
+const plateTitle = computed(() => {
+  const organization = preview.organization.trim()
+  return organization ? `What ${organization} gets` : 'What you get'
+})
+const plateNote = computed(() => {
+  if (preview.requested) {
+    return 'This is the address you asked for. Suggested, not reserved.'
+  }
+  if (toPortalSlug(preview.preferredSlug)) {
+    return 'Suggested from your organization — not reserved.'
+  }
+  return 'Example address. Choose yours on the request — suggested, not reserved.'
+})
+
+function onPreview(next: { preferredSlug: string; organization: string; requested: boolean }) {
+  Object.assign(preview, next)
+}
+
 useSeoMeta({
   title: 'Customer Portal Evaluations',
   description: 'Evaluate the Nuxt Customer Portal for your organization.'
 })
 </script>
+
 <template>
   <div class="public-home">
-    <section class="public-hero">
-      <p class="eyebrow">MANAGED NUXT CUSTOMER PORTAL</p>
-      <h1>Your portal, managed.</h1>
-      <div class="public-hero__lede">
-        <p>A dedicated Nuxt Customer Portal, operated for your organization.</p>
-        <div class="public-hero__actions">
-          <a class="btn btn--primary" href="#request-access">Request access</a
-          ><a class="public-hero__source" href="https://nuxt-customer-portal.com" target="_blank" rel="noreferrer"
-            >Nuxt Customer Portal ↗</a
-          >
-        </div>
+    <div class="public-rail">
+      <section class="public-intro" aria-labelledby="public-heading">
+        <PortalLogoMark size="page" />
+        <h1 id="public-heading"><span>Your managed </span><span>portal.</span></h1>
+        <p class="public-pitch__lede">A dedicated Nuxt Customer Portal, operated for your organization.</p>
+        <p class="public-pitch__body">
+          Don't have time to install and operate it yourself? We host an evaluation at your own portal address and
+          handle the infrastructure.
+        </p>
+      </section>
+      <div class="public-details">
+        <dl class="public-itinerary">
+          <div>
+            <dt>Ask</dt>
+            <dd>Fill in the request. There is no instant signup.</dd>
+          </div>
+          <div>
+            <dt>Review</dt>
+            <dd>We read every request and reply by email. We may ask follow-up questions.</dd>
+          </div>
+          <div>
+            <dt>Launch</dt>
+            <dd>
+              When approved, we provision the domain, database, authentication secret, and application. Your nominated
+              administrator receives the URL when it is healthy.
+            </dd>
+          </div>
+        </dl>
+        <figure class="public-plate" :class="{ 'public-plate--live': Boolean(toPortalSlug(preview.preferredSlug)) }">
+          <figcaption>{{ plateTitle }}</figcaption>
+          <p class="public-plate__host">
+            <span class="public-plate__slug">{{ plateSlug }}</span
+            ><span class="public-plate__domain">.{{ portalHost }}</span>
+          </p>
+          <p class="public-plate__note">{{ plateNote }}</p>
+        </figure>
+        <a class="public-pitch__source" href="https://nuxt-customer-portal.com" target="_blank" rel="noreferrer"
+          >Nuxt Customer Portal ↗</a
+        >
       </div>
-    </section>
-    <section class="workflow" aria-label="How PortalNuxt works">
-      <article>
-        <span>1.0 · EVALUATE</span>
-        <div>
-          <h2>Evaluate without commitment.</h2>
-          <p>
-            Don't have time to install and operate the Nuxt Customer Portal yourself? We will host an evaluation version
-            for you. You will have your own portal address, and we will handle the infrastructure.
-          </p>
-        </div>
-      </article>
-      <article>
-        <span>2.0 · REQUEST</span>
-        <div>
-          <h2>Request access to the evaluation version.</h2>
-          <p>Fill out the form below to request access to the evaluation version.</p>
-        </div>
-      </article>
-      <article>
-        <span>3.0 · REVIEW</span>
-        <div>
-          <h2>We review every request.</h2>
-          <p>
-            There is no instant signup or automatic approval. We reply by email with the outcome and may ask follow-up
-            questions.
-          </p>
-        </div>
-      </article>
-      <article>
-        <span>4.0 · LAUNCH</span>
-        <div>
-          <h2>Your portal, ready.</h2>
-          <p>
-            When approved, we provision the domain, database, authentication secret, and application. Your nominated
-            administrator receives the portal URL when it is healthy.
-          </p>
-        </div>
-      </article>
-    </section>
-    <section id="request-access" class="request-section">
+    </div>
+    <section id="request-access" class="public-request">
       <header>
-        <p class="eyebrow">EARLY ACCESS</p>
-        <h2>Request access to the evaluation version.</h2>
-        <p>Fill out the form below to request access to the evaluation version.</p>
+        <h2>Request an evaluation</h2>
+        <p>
+          Introduce your organization and the work this portal should support. We review every request by hand and only
+          provision an evaluation after we approve it — this is not a signup.
+        </p>
       </header>
-      <AccessRequestForm />
+      <AccessRequestForm @preview="onPreview" />
     </section>
   </div>
 </template>

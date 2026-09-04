@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { FormErrorEvent, FormSubmitEvent } from '@nuxt/ui'
-import { accessRequestInputSchema, type AccessRequestInput } from '~~/shared/access-requests'
+import { accessRequestInputSchema, toPortalSlug, type AccessRequestInput } from '~~/shared/access-requests'
 
 const config = useRuntimeConfig()
 const state = reactive<AccessRequestInput>({
@@ -33,19 +33,34 @@ const timelineOptions = [
 const busy = ref(false)
 const submitted = ref(false)
 const error = ref('')
+const slugEditedByUser = ref(false)
+
+const emit = defineEmits<{
+  preview: [preview: { preferredSlug: string; organization: string; requested: boolean }]
+}>()
 
 watch(
   () => state.organization,
   (value) => {
-    if (!state.preferredSlug) {
-      state.preferredSlug = value
-        .toLowerCase()
-        .trim()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, '')
-        .slice(0, 63)
-    }
+    if (slugEditedByUser.value) return
+    state.preferredSlug = toPortalSlug(value)
   }
+)
+
+watch(
+  () => state.preferredSlug,
+  (value) => {
+    const requested = toPortalSlug(value)
+    slugEditedByUser.value = Boolean(requested) && requested !== toPortalSlug(state.organization)
+  }
+)
+
+watch(
+  () => [state.preferredSlug, state.organization, slugEditedByUser.value] as const,
+  ([preferredSlug, organization, requested]) => {
+    emit('preview', { preferredSlug, organization, requested })
+  },
+  { immediate: true }
 )
 
 async function submit(event: FormSubmitEvent<AccessRequestInput>) {

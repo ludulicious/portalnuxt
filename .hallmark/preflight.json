@@ -1,8 +1,8 @@
 {
-  "date": "2026-08-22",
-  "framework": "Nuxt 4",
-  "fontStack": "introduced by Cobalt",
-  "palette": "introduced by Cobalt",
-  "motion": "motion-cut",
-  "spacing": "4pt scale"
+  "date": "2026-09-04",
+  "framework": "Nuxt 4 + Nuxt UI 4 + Tailwind v4",
+  "fontStack": "Space Grotesk (display) + Inter (body) + JetBrains Mono (app/assets/css/main.css L1, tokens.css L28-30)",
+  "palette": "OKLCH Cobalt custom properties (tokens.css :root / .dark)",
+  "motion": "motion-cut (no framer-motion / gsap / motion / lenis)",
+  "spacing": "4pt named scale (tokens.css --space-*)"
 }
