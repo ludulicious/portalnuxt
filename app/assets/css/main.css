@@ -100,12 +100,6 @@ h3 {
   color: var(--color-muted);
   font-size: var(--text-sm);
   white-space: nowrap;
-  transition: color var(--dur-short) var(--ease-out);
-}
-.nav__link.router-link-active,
-.nav__link[aria-current='page'] {
-  color: var(--color-accent);
-  font-weight: 600;
 }
 .nav__actions {
   display: flex;
@@ -235,14 +229,11 @@ h3 {
 
 .main {
   width: min(100% - 2rem, 80rem);
-  max-width: 100%;
-  min-width: 0;
   margin-inline: auto;
   padding-block: var(--space-xl) var(--space-3xl);
 }
 main.main {
   flex: 1 0 auto;
-  overflow-x: clip;
 }
 .create-page {
   display: grid;
@@ -561,8 +552,6 @@ main.main {
   padding-block: var(--space-xl);
 }
 .operator-page {
-  min-width: 0;
-  max-width: 100%;
   margin-block: calc(-1 * var(--space-xl)) calc(-1 * var(--space-3xl));
 }
 .operator-band h2 {
@@ -667,14 +656,11 @@ main.main {
 .operator-grid {
   display: grid;
   gap: var(--space-md);
-  min-width: 0;
   margin-block-start: var(--space-md);
 }
 .operator-item {
   display: grid;
   gap: var(--space-xs);
-  min-width: 0;
-  max-width: 100%;
   padding: var(--space-md);
   border: var(--rule-thin) solid var(--color-rule);
   border-radius: var(--radius-sm);
@@ -1269,11 +1255,7 @@ main.main:has(> .public-home) {
 
 @media (hover: hover) and (pointer: fine) {
   .nav__link:hover {
-    color: var(--color-ink);
-  }
-  .nav__link.router-link-active:hover,
-  .nav__link[aria-current='page']:hover {
-    color: var(--color-accent-hover);
+    color: var(--color-accent);
   }
   .nav--home .nav__link:hover {
     color: var(--color-graphite-ink);
@@ -1330,16 +1312,6 @@ main.main:has(> .public-home) {
   .nav__links {
     display: flex;
   }
-  .nav:not(.nav--home) .nav__inner {
-    position: relative;
-  }
-  .nav:not(.nav--home) .nav__links {
-    position: absolute;
-    inset-block-start: 50%;
-    inset-inline-start: 50%;
-    margin: 0;
-    transform: translate(-50%, -50%);
-  }
   .hero {
     grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
     align-items: center;
@@ -1372,20 +1344,10 @@ main.main:has(> .public-home) {
     height: 100%;
     overflow: hidden;
   }
-  html.layout-home,
-  html.layout-home body,
-  html.layout-home #__nuxt {
-    height: 100%;
-    max-height: 100dvh;
-    overflow: hidden;
-  }
   .shell {
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
-  }
-  .shell--home {
-    min-height: 0;
   }
   .shell > .nav,
   .shell--home .shell__frame > .nav {
@@ -1394,12 +1356,7 @@ main.main:has(> .public-home) {
   main.main {
     flex: 1 1 auto;
     min-height: 0;
-    min-width: 0;
-    overflow-x: clip;
-    overflow-y: auto;
-  }
-  .shell--home main.main {
-    overflow: hidden;
+    overflow: auto;
   }
   .shell > .footer,
   .shell--home .shell__frame > .footer {
@@ -1417,8 +1374,6 @@ main.main:has(> .public-home) {
     grid-template-rows: auto minmax(0, 1fr) auto;
     width: min(100% - 2rem, 100rem);
     height: calc(100dvh - 2rem);
-    max-height: calc(100dvh - 2rem);
-    min-height: 0;
     margin: 1rem auto;
     overflow: hidden;
     border: var(--rule-thin) solid var(--color-rule);
@@ -1480,10 +1435,8 @@ main.main:has(> .public-home) {
     grid-row: 2;
     display: grid;
     grid-template-columns: subgrid;
-    grid-template-rows: minmax(0, 1fr);
     width: 100%;
     min-height: 0;
-    max-height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
@@ -1542,9 +1495,14 @@ main.main:has(> .public-home) {
   .public-request {
     order: 0;
     min-height: 0;
-    max-height: 100%;
-    overflow: hidden;
+    overflow: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     padding: var(--space-xl);
+  }
+  .public-request::-webkit-scrollbar {
+    width: 0;
+    height: 0;
   }
   .public-request > header,
   .public-request .request-form,
