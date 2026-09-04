@@ -77,16 +77,9 @@ h3 {
   font-weight: 600;
   white-space: nowrap;
 }
-.nav__toolbar {
-  display: flex;
-  flex: 1 1 auto;
-  align-items: center;
-  gap: var(--space-md);
-  min-width: 0;
-  min-height: 4rem;
-}
 .nav__links {
   display: none;
+  margin-inline-start: auto;
   align-items: center;
   gap: var(--space-lg);
 }
@@ -95,36 +88,12 @@ h3 {
   font-size: var(--text-sm);
   white-space: nowrap;
 }
-.nav__actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-inline-start: auto;
-}
 .color-mode-toggle {
   flex: 0 0 auto;
+  margin-inline-start: auto;
 }
-.nav--home {
-  border-block-end-color: color-mix(in oklch, var(--color-graphite-ink) 16%, transparent);
-  background: var(--color-graphite);
-  backdrop-filter: none;
-}
-.nav--home .nav__inner {
-  width: 100%;
-  padding-inline: max(1rem, calc((100vw - 80rem) / 2));
-}
-.nav--home .nav__brand,
-.nav--home .nav__link {
-  color: var(--color-graphite-ink);
-}
-.nav--home .nav__link {
-  color: color-mix(in oklch, var(--color-graphite-ink) 72%, transparent);
-}
-.nav--home .nav__actions :is(a, button) {
-  color: var(--color-graphite-ink);
-  background: transparent;
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-graphite-ink) 32%, transparent);
+.nav__links + .color-mode-toggle {
+  margin-inline-start: var(--space-lg);
 }
 .profile {
   position: relative;
@@ -762,217 +731,95 @@ main.main {
     transform: rotate(360deg);
   }
 }
+/* Hallmark · genre: modern-minimal · macrostructure: Narrative Workflow · theme: Cobalt · enrichment: none · nav: N5 · footer: Ft5
+ * Hallmark · pre-emit critique: P4 H4 E4 S5 R4 V5
+ */
+.public-home {
+  display: grid;
+  gap: var(--space-3xl);
+  padding-block: var(--space-md) var(--space-3xl);
+}
+.public-hero {
+  display: grid;
+  gap: var(--space-md);
+  min-height: clamp(32rem, 62vw, 42rem);
+  padding: clamp(var(--space-lg), 5vw, var(--space-3xl));
+  align-content: center;
+  border: var(--rule-thin) solid var(--color-rule-2);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-graphite);
+  background-image: url('/images/portalnuxt-hero-infrastructure.png');
+  background-position: center right;
+  background-size: cover;
+  color: var(--color-graphite-ink);
+}
+.public-hero h1 {
+  max-width: 12ch;
+  font-size: clamp(3rem, 7vw, 6rem);
+  line-height: 0.98;
+  letter-spacing: -0.04em;
+  overflow-wrap: anywhere;
+  color: var(--color-graphite-ink);
+}
+.public-hero__lede {
+  display: grid;
+  gap: var(--space-md);
+  max-width: 34rem;
+  font-size: var(--text-lg);
+}
+.public-hero__actions,
 .pagination {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
 }
-.status-label {
-  font: 600 var(--text-xs) / 1 var(--font-mono);
-  color: var(--color-accent);
-  letter-spacing: 0.08em;
-}
-main.main:has(> .public-home) {
-  width: 100%;
-  max-width: none;
-  padding-block: 0;
-}
-.public-home {
-  display: grid;
-  width: 100%;
-}
-.public-rail {
-  display: contents;
-}
-.public-intro,
-.public-details,
-.public-request {
-  display: grid;
-  align-content: start;
-  min-width: 0;
-}
-.public-intro,
-.public-details {
-  gap: var(--space-lg);
-  background: var(--color-graphite);
-  color: var(--color-graphite-ink);
-}
-.public-intro {
-  min-height: 18rem;
-  padding: var(--space-2xl) max(1rem, calc((100vw - 80rem) / 2)) var(--space-xl);
-  background-color: var(--color-graphite);
-  background-image:
-    linear-gradient(
-      165deg,
-      color-mix(in oklch, var(--color-graphite) 82%, transparent) 0%,
-      color-mix(in oklch, var(--color-graphite) 48%, transparent) 58%,
-      color-mix(in oklch, var(--color-graphite) 22%, transparent) 100%
-    ),
-    url('/images/portalnuxt-hero-infrastructure.png');
-  background-position: 72% 38%;
-  background-size: cover;
-}
-.public-details {
-  order: 3;
-  padding: var(--space-xl) max(1rem, calc((100vw - 80rem) / 2)) var(--space-2xl);
-  border-block-start: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 16%, transparent);
-}
-.public-home .public-intro .portal-logo,
-.public-pitch__body {
-  display: none;
-}
-.public-intro h1 {
-  display: grid;
-  color: var(--color-graphite-ink);
-  font-size: clamp(2.4rem, 11vw, 3.25rem);
-  line-height: 0.92;
-  letter-spacing: -0.055em;
-  text-shadow: 0 1px 24px color-mix(in oklch, var(--color-graphite) 65%, transparent);
-}
-.public-intro h1 span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.public-pitch__lede,
-.public-pitch__body {
-  max-width: min(36ch, 100%);
-  min-width: 0;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-.public-pitch__lede {
-  font-size: var(--text-lg);
-  color: var(--color-graphite-ink);
-  text-shadow: 0 1px 18px color-mix(in oklch, var(--color-graphite) 70%, transparent);
-}
-.public-intro h1 span {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-.public-pitch__lede,
-.public-pitch__body {
-  max-width: min(36ch, 100%);
-  min-width: 0;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-.public-pitch__lede {
-  font-size: var(--text-lg);
-  color: var(--color-graphite-ink);
-}
-.public-pitch__body {
-  color: color-mix(in oklch, var(--color-graphite-ink) 72%, transparent);
-}
-.public-itinerary {
-  display: grid;
-  margin: var(--space-xs) 0 0;
-  border-block-start: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 18%, transparent);
-}
-.public-itinerary > div {
-  display: grid;
-  gap: var(--space-2xs);
-  min-width: 0;
-  padding-block: var(--space-md);
-  border-block-end: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 18%, transparent);
-}
-.public-itinerary dt {
-  color: var(--color-graphite-ink);
-  font-family: var(--font-display);
-  font-weight: 600;
-}
-.public-itinerary dd {
-  margin: 0;
-  min-width: 0;
-  color: color-mix(in oklch, var(--color-graphite-ink) 70%, transparent);
-  font-size: var(--text-sm);
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-.public-plate {
-  margin: 0;
-  padding: var(--space-md) var(--space-lg);
-  border: var(--rule-medium) solid color-mix(in oklch, var(--color-graphite-ink) 28%, transparent);
-  box-shadow: inset 0 0 0 var(--rule-thin) color-mix(in oklch, var(--color-graphite-ink) 10%, transparent);
-  background: var(--color-graphite-2);
-}
-.public-plate figcaption {
-  margin-block-end: var(--space-xs);
-  color: color-mix(in oklch, var(--color-graphite-ink) 55%, transparent);
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
-  overflow-wrap: anywhere;
-}
-.public-plate__host {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  color: var(--color-graphite-ink);
-  font-family: var(--font-mono);
-  font-size: clamp(1.05rem, 2.6vw, 1.5rem);
-  font-weight: 600;
-  letter-spacing: -0.04em;
-  line-height: 1.2;
-}
-.public-plate__slug {
-  color: color-mix(in oklch, var(--color-graphite-ink) 58%, transparent);
-}
-.public-plate__domain {
-  color: color-mix(in oklch, var(--color-graphite-ink) 58%, transparent);
-  font-weight: 500;
-}
-.public-plate__note {
-  margin-block-start: var(--space-xs);
-  color: color-mix(in oklch, var(--color-graphite-ink) 58%, transparent);
-  font-size: var(--text-xs);
-  line-height: 1.4;
-}
-.public-plate--live .public-plate__slug {
-  color: var(--color-graphite-ink);
-}
-.public-pitch__source {
-  justify-self: start;
+.public-hero__source {
   color: var(--color-graphite-ink);
   font-size: var(--text-sm);
-  text-decoration: underline;
-  text-decoration-color: color-mix(in oklch, var(--color-graphite-ink) 35%, transparent);
+  opacity: 0.72;
   text-underline-offset: 0.25em;
   white-space: nowrap;
 }
-.public-request {
-  order: 2;
-  gap: var(--space-xl);
-  padding: var(--space-xl) max(1rem, calc((100vw - 80rem) / 2)) var(--space-3xl);
-  background: var(--color-paper);
-  scroll-margin-top: 5rem;
+.public-hero .eyebrow {
+  color: var(--color-graphite-ink);
+  opacity: 0.72;
 }
-.dark .public-request {
-  background: var(--color-paper-2);
+.workflow {
+  border-block-start: var(--rule-thin) solid var(--color-rule);
 }
-.public-request > header {
+.workflow article {
   display: grid;
-  gap: var(--space-sm);
-  max-width: 42rem;
+  gap: var(--space-lg);
+  padding-block: var(--space-2xl);
+  border-block-end: var(--rule-thin) solid var(--color-rule);
 }
-.public-request h2 {
-  font-size: clamp(1.75rem, 3vw, 2.5rem);
-  line-height: 1.08;
-  letter-spacing: -0.035em;
+.workflow article > span,
+.status-label {
+  font: 600 var(--text-xs)/1 var(--font-mono);
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
 }
-.public-request > header p {
-  max-width: 44ch;
-  color: var(--color-muted);
-  line-height: 1.5;
+.workflow article > div {
+  max-width: 50rem;
 }
-.public-request .request-form,
-.public-request .request-receipt {
-  max-width: 42rem;
-  padding: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
+.workflow h2 {
+  font-size: clamp(1.75rem, 3.5vw, 3rem);
+  line-height: 1.05;
+  margin-block-end: var(--space-md);
+}
+.request-section h2 {
+  font-size: clamp(1.75rem, 3.5vw, 3rem);
+  line-height: 1.05;
+  margin-block-end: var(--space-md);
+}
+.request-section {
+  display: grid;
+  gap: var(--space-xl);
+  scroll-margin-top: 6rem;
+}
+.request-section > header {
+  max-width: 48rem;
 }
 .request-form,
 .request-receipt,
@@ -1231,9 +1078,6 @@ main.main:has(> .public-home) {
   .nav__link:hover {
     color: var(--color-accent);
   }
-  .nav--home .nav__link:hover {
-    color: var(--color-graphite-ink);
-  }
   .btn:hover {
     background: var(--color-paper-2);
   }
@@ -1247,39 +1091,11 @@ main.main:has(> .public-home) {
   .profile__item:hover {
     background: var(--color-paper-2);
   }
-  .public-pitch__source:hover {
-    text-decoration-color: currentcolor;
-  }
 }
 @media (min-width: 40rem) {
   .main,
   .nav__inner {
     width: min(100% - 3rem, 80rem);
-  }
-  .nav--home .nav__inner {
-    width: 100%;
-    padding-inline: max(1.5rem, calc((100vw - 80rem) / 2));
-  }
-  main.main:has(> .public-home) {
-    width: 100%;
-  }
-  .public-intro,
-  .public-details,
-  .public-request {
-    padding-inline: max(1.5rem, calc((100vw - 80rem) / 2));
-  }
-  .public-itinerary {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0 var(--space-md);
-  }
-  .public-itinerary > div {
-    padding-inline-end: var(--space-md);
-    border-block-end: 0;
-    border-inline-end: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 18%, transparent);
-  }
-  .public-itinerary > div:last-child {
-    padding-inline-end: 0;
-    border-inline-end: 0;
   }
 }
 @media (min-width: 60rem) {
@@ -1298,6 +1114,9 @@ main.main:has(> .public-home) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: end;
   }
+  .workflow article {
+    grid-template-columns: minmax(10rem, 3fr) minmax(0, 9fr);
+  }
   .request-form__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1310,103 +1129,6 @@ main.main:has(> .public-home) {
   }
   .request-detail__grid {
     grid-template-columns: minmax(0, 7fr) minmax(18rem, 5fr);
-  }
-}
-@media (min-width: 68rem) {
-  .nav--home {
-    border-block-end: 0;
-    background: transparent;
-  }
-  .nav--home .nav__inner {
-    display: grid;
-    grid-template-columns: minmax(22rem, 36vw) minmax(0, 1fr);
-    gap: 0;
-    width: 100%;
-    padding-inline: 0;
-  }
-  .nav--home .nav__brand {
-    min-height: 4rem;
-    padding-inline: max(1.5rem, calc((100vw - 80rem) / 2)) var(--space-xl);
-    border-inline-end: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 16%, transparent);
-    background: var(--color-graphite);
-    color: var(--color-graphite-ink);
-  }
-  .nav--home .nav__toolbar {
-    padding-inline: var(--space-xl) max(1.5rem, calc((100vw - 80rem) / 2));
-    background: var(--color-paper);
-  }
-  .dark .nav--home .nav__toolbar {
-    background: var(--color-paper-2);
-  }
-  .nav--home .nav__link {
-    color: var(--color-muted);
-  }
-  .nav--home .nav__link:hover {
-    color: var(--color-accent);
-  }
-  .nav--home .nav__actions :is(a, button) {
-    color: unset;
-    background: unset;
-    box-shadow: unset;
-  }
-  .public-home {
-    grid-template-columns: minmax(22rem, 36vw) minmax(0, 1fr);
-  }
-  .public-rail {
-    display: grid;
-    align-content: start;
-    align-self: start;
-    position: sticky;
-    inset-block-start: 4rem;
-    min-height: calc(100dvh - 4rem);
-    padding: var(--space-2xl) var(--space-xl) var(--space-xl) max(1.5rem, calc((100vw - 80rem) / 2));
-    border-inline-end: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 16%, transparent);
-    background-color: var(--color-graphite);
-    background-image:
-      linear-gradient(
-        165deg,
-        color-mix(in oklch, var(--color-graphite) 86%, transparent) 0%,
-        color-mix(in oklch, var(--color-graphite) 52%, transparent) 48%,
-        color-mix(in oklch, var(--color-graphite) 28%, transparent) 100%
-      ),
-      url('/images/portalnuxt-hero-infrastructure.png');
-    background-position: 82% center;
-    background-size: cover;
-    color: var(--color-graphite-ink);
-  }
-  .public-intro,
-  .public-details {
-    padding: 0;
-    border: 0;
-    background: transparent;
-    background-image: none;
-  }
-  .public-intro .portal-logo--page,
-  .public-home .public-intro .portal-logo,
-  .public-pitch__body {
-    display: block;
-  }
-  .public-intro h1 {
-    font-size: clamp(2.75rem, 8vw, 4.5rem);
-    line-height: 0.9;
-  }
-  .public-details {
-    order: 0;
-  }
-  .public-request {
-    order: 0;
-    padding: var(--space-2xl) max(1.5rem, calc((100vw - 80rem) / 2)) var(--space-3xl) var(--space-xl);
-  }
-  .public-itinerary {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-  .public-itinerary > div {
-    grid-template-columns: 5.5rem minmax(0, 1fr);
-    gap: var(--space-sm);
-    padding-inline-end: 0;
-    border-inline-end: 0;
-    border-block-end: var(--rule-thin) solid color-mix(in oklch, var(--color-graphite-ink) 18%, transparent);
   }
 }
 @media (max-width: 39.999rem) {

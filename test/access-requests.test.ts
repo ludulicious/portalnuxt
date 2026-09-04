@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { ACCESS_REQUEST_STATUSES, accessRequestInputSchema, toPortalSlug } from '../shared/access-requests'
+import { ACCESS_REQUEST_STATUSES, accessRequestInputSchema } from '../shared/access-requests'
 
 test('access request lifecycle includes review and provisioning states', () => {
   assert.deepEqual(ACCESS_REQUEST_STATUSES, ['NEW', 'REVIEWING', 'APPROVED', 'DECLINED', 'PROVISIONING', 'PROVISIONED'])
@@ -26,10 +26,4 @@ test('access requests normalize email and slug while requiring qualification and
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, consent: false }).success, false)
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, termsAccepted: false }).success, false)
   assert.equal(accessRequestInputSchema.safeParse({ ...parsed, intendedUse: 'Too short' }).success, false)
-})
-
-test('toPortalSlug turns an organization name into a hostname label', () => {
-  assert.equal(toPortalSlug('Analytical Engines'), 'analytical-engines')
-  assert.equal(toPortalSlug('  ACME--Labs!  '), 'acme-labs')
-  assert.equal(toPortalSlug(''), '')
 })
