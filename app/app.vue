@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { authClient } from '~/utils/auth-client'
 
+const route = useRoute()
+const isHome = computed(() => {
+  const path = route.path || '/'
+  return path === '/'
+})
+
 useHead({
   titleTemplate: (title) => (title ? `${title} / PortalNuxt` : 'PortalNuxt'),
-  htmlAttrs: { lang: 'en' },
+  htmlAttrs: {
+    lang: 'en',
+    class: computed(() => (isHome.value ? 'layout-home' : ''))
+  },
   link: [
     { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
     {
@@ -24,11 +33,6 @@ useHead({
   ]
 })
 
-const route = useRoute()
-const isHome = computed(() => {
-  const path = route.path || '/'
-  return path === '/'
-})
 const profile = useTemplateRef<HTMLElement>('profile')
 const profileOpen = ref(false)
 const signingOut = ref(false)
