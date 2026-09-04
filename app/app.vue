@@ -27,6 +27,16 @@ useHead({
 const profile = useTemplateRef<HTMLElement>('profile')
 const profileOpen = ref(false)
 const signingOut = ref(false)
+const route = useRoute()
+function menuCurrent(path: string) {
+  if (route.path === path) {
+    return 'page'
+  }
+  if (route.path.startsWith(`${path}/`)) {
+    return 'location'
+  }
+  return undefined
+}
 const { data: session, refresh: refreshSession } = await useFetch('/api/auth/session', { key: 'platform-session' })
 const user = computed(() => session.value?.user)
 const operator = computed(() => session.value?.operator === true)
@@ -66,11 +76,17 @@ onBeforeUnmount(() => {
         <div class="nav__inner">
           <NuxtLink class="nav__brand" to="/"><PortalLogoMark />PortalNuxt</NuxtLink>
           <nav v-if="operator" class="nav__links" aria-label="Primary">
-            <NuxtLink class="nav__link" to="/instances">Instances</NuxtLink>
-            <NuxtLink class="nav__link" to="/access-requests">Access requests</NuxtLink>
+            <NuxtLink class="nav__link" to="/instances" :aria-current="menuCurrent('/instances')">Instances</NuxtLink>
+            <NuxtLink class="nav__link" to="/access-requests" :aria-current="menuCurrent('/access-requests')"
+              >Access requests</NuxtLink
+            >
           </nav>
           <nav v-else class="nav__links" aria-label="Primary">
-            <a class="nav__link" href="/#request-access">Request access</a
+            <a
+              class="nav__link"
+              href="/#request-access"
+              :aria-current="route.path === '/' && route.hash === '#request-access' ? 'location' : undefined"
+              >Request access</a
             ><a class="nav__link" href="https://github.com/ludulicious/nuxt-customer-portal">Open source</a>
           </nav>
           <UButton
