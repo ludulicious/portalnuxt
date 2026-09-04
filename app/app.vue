@@ -66,8 +66,7 @@ onBeforeUnmount(() => {
 
 <template>
   <UApp>
-    <div class="shell" :class="{ 'shell--home': isHome }">
-      <div class="shell__frame">
+    <div class="shell">
       <header class="nav" :class="{ 'nav--home': isHome }">
         <div class="nav__inner">
           <NuxtLink class="nav__brand" to="/"><PortalLogoMark />PortalNuxt</NuxtLink>
@@ -135,7 +134,6 @@ onBeforeUnmount(() => {
         <div><strong>PortalNuxt</strong><span>© 2026 Ludulicious B.V.</span></div>
         <nav><NuxtLink to="/terms">Terms of service</NuxtLink><NuxtLink to="/privacy">Privacy policy</NuxtLink></nav>
       </footer>
-      </div>
     </div>
   </UApp>
 </template>

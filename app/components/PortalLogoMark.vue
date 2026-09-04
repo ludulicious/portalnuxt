@@ -35,12 +35,6 @@ const darkLogoUrl = '/images/nuxt-customer-portal-logo-dark.webp'
   width: 2rem;
   height: 2rem;
 }
-@media (min-width: 68rem) {
-  :global(.nav--home) .portal-logo--nav {
-    width: 2.25rem;
-    height: 2.25rem;
-  }
-}
 .portal-logo--page {
   width: clamp(3.5rem, 8vw, 5rem);
   height: clamp(3.5rem, 8vw, 5rem);
