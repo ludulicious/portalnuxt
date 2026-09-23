@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import type { DeploymentProvider, DeploymentSpec } from './providers'
 
 interface CoolifyConfig {
@@ -37,7 +38,11 @@ export class CoolifyProvider implements DeploymentProvider {
       }
     })
     if (!response.ok) {
-      throw new Error(`Coolify ${init.method || 'GET'} ${path} failed (${response.status})`)
+      const details =
+        response.status === 401
+          ? `; host=${new URL(this.config.url).host}; tokenLength=${this.config.token.length}; tokenFingerprint=${createHash('sha256').update(this.config.token).digest('hex').slice(0, 12)}; pid=${process.pid}`
+          : ''
+      throw new Error(`Coolify ${init.method || 'GET'} ${path} failed (${response.status}${details})`)
     }
     return response.json() as Promise<T>
   }
