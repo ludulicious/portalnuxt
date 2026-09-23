@@ -14,6 +14,8 @@ export const sanitizeProvisioningError = (error: unknown) =>
     : 'Provisioning failed'
 class HealthCheckPendingError extends Error {}
 
+export const shouldConfigureEnvironment = (deployedVersion: string | null) => deployedVersion === null
+
 async function claimWork(): Promise<WorkRow | null> {
   const result = await useDatabase().query<WorkRow>(`WITH candidate AS (
     SELECT id FROM platform_instance WHERE status IN ('QUEUED','PROVISIONING') AND next_attempt_at <= now() AND (locked_at IS NULL OR locked_at < now() - interval '10 minutes') ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1
@@ -85,6 +87,13 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       [instanceId, uuid]
     )
   } else if (step === 'ENVIRONMENT') {
+    if (!shouldConfigureEnvironment(instance.deployedVersion)) {
+      await pool.query(
+        `UPDATE platform_instance SET provisioning_step='DEPLOYMENT', locked_at=NULL, updated_at=now() WHERE id=$1`,
+        [instanceId]
+      )
+      return
+    }
     const secrets = await pool.query<{
       encrypted_database_url: string
       encrypted_auth_secret: string

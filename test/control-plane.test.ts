@@ -3,7 +3,7 @@ import test from 'node:test'
 import { INSTANCE_STATUSES, PROVISIONING_STEPS } from '../shared/control-plane'
 import { portalCreateSchema, portalSlugSchema } from '../shared/portal-validation'
 import { decryptSecret, encryptSecret, generatePortalEncryptionKey } from '../server/utils/crypto'
-import { sanitizeProvisioningError } from '../server/utils/provisioning'
+import { sanitizeProvisioningError, shouldConfigureEnvironment } from '../server/utils/provisioning'
 import { parseCoolifyImageReference } from '../server/utils/coolify-provider'
 import { portalDatabaseIdentifier, tenantDatabaseUrl } from '../server/utils/shared-postgres-provider'
 
@@ -50,6 +50,11 @@ test('portal encryption keys match openssl rand -base64 32 output', () => {
   const encryptionKey = generatePortalEncryptionKey()
   assert.equal(Buffer.from(encryptionKey, 'base64').byteLength, 32)
   assert.match(encryptionKey, /^[A-Za-z0-9+/]{43}=$/)
+})
+
+test('environment variables are configured only for portals that have not been deployed', () => {
+  assert.equal(shouldConfigureEnvironment(null), true)
+  assert.equal(shouldConfigureEnvironment('0.4.2'), false)
 })
 
 test('portal slugs allow DNS-safe labels and reject ambiguous hyphens', () => {
