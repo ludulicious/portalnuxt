@@ -37,7 +37,7 @@ export class CoolifyProvider implements DeploymentProvider {
       }
     })
     if (!response.ok) {
-      throw new Error(`Coolify request failed (${response.status})`)
+      throw new Error(`Coolify ${init.method || 'GET'} ${path} failed (${response.status})`)
     }
     return response.json() as Promise<T>
   }
