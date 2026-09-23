@@ -15,6 +15,7 @@ export const sanitizeProvisioningError = (error: unknown) =>
 class HealthCheckPendingError extends Error {}
 
 export const shouldConfigureEnvironment = (deployedVersion: string | null) => deployedVersion === null
+export const shouldEnsureApplicationForDeployment = (deploymentUuid: string | null) => deploymentUuid === null
 
 async function claimWork(): Promise<WorkRow | null> {
   const result = await useDatabase().query<WorkRow>(`WITH candidate AS (
@@ -124,21 +125,21 @@ async function advance(instanceId: string, step: ProvisioningStep) {
     if (!instance.coolifyApplicationUuid) {
       throw new Error('Coolify application is missing')
     }
-    const applicationUuid = await deploymentProvider().ensureApplication({
-      instanceId,
-      slug: instance.slug,
-      name: instance.name,
-      domain: instance.domain,
-      image: instance.desiredImage,
-      applicationUuid: instance.coolifyApplicationUuid
-    })
-    if (applicationUuid !== instance.coolifyApplicationUuid) {
-      await pool.query(`UPDATE platform_instance SET coolify_application_uuid=$2, updated_at=now() WHERE id=$1`, [
+    if (shouldEnsureApplicationForDeployment(instance.coolifyDeploymentUuid)) {
+      const applicationUuid = await deploymentProvider().ensureApplication({
         instanceId,
-        applicationUuid
-      ])
-    }
-    if (!instance.coolifyDeploymentUuid) {
+        slug: instance.slug,
+        name: instance.name,
+        domain: instance.domain,
+        image: instance.desiredImage,
+        applicationUuid: instance.coolifyApplicationUuid
+      })
+      if (applicationUuid !== instance.coolifyApplicationUuid) {
+        await pool.query(`UPDATE platform_instance SET coolify_application_uuid=$2, updated_at=now() WHERE id=$1`, [
+          instanceId,
+          applicationUuid
+        ])
+      }
       const uuid = await deploymentProvider().deploy(applicationUuid)
       await pool.query(
         `UPDATE platform_instance SET coolify_deployment_uuid=$2, locked_at=NULL, next_attempt_at=now()+interval '10 seconds', updated_at=now() WHERE id=$1`,

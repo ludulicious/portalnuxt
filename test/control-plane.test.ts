@@ -3,7 +3,11 @@ import test from 'node:test'
 import { INSTANCE_STATUSES, PROVISIONING_STEPS } from '../shared/control-plane'
 import { portalCreateSchema, portalSlugSchema } from '../shared/portal-validation'
 import { decryptSecret, encryptSecret, generatePortalEncryptionKey } from '../server/utils/crypto'
-import { sanitizeProvisioningError, shouldConfigureEnvironment } from '../server/utils/provisioning'
+import {
+  sanitizeProvisioningError,
+  shouldConfigureEnvironment,
+  shouldEnsureApplicationForDeployment
+} from '../server/utils/provisioning'
 import { parseCoolifyImageReference } from '../server/utils/coolify-provider'
 import { portalDatabaseIdentifier, tenantDatabaseUrl } from '../server/utils/shared-postgres-provider'
 
@@ -55,6 +59,11 @@ test('portal encryption keys match openssl rand -base64 32 output', () => {
 test('environment variables are configured only for portals that have not been deployed', () => {
   assert.equal(shouldConfigureEnvironment(null), true)
   assert.equal(shouldConfigureEnvironment('0.4.2'), false)
+})
+
+test('deployment status polling does not reconfigure the Coolify application', () => {
+  assert.equal(shouldEnsureApplicationForDeployment(null), true)
+  assert.equal(shouldEnsureApplicationForDeployment('deployment-uuid'), false)
 })
 
 test('portal slugs allow DNS-safe labels and reject ambiguous hyphens', () => {
