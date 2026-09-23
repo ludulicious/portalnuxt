@@ -12,8 +12,17 @@ export default defineEventHandler(async (event) => {
   const domain = `${input.slug}.${config.portalBaseDomain}`
   try {
     const result = await useDatabase().query(
-      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7) RETURNING *`,
-      [id, input.adminEmail.toLowerCase(), input.name, input.slug, domain, release.image, release.version]
+      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8) RETURNING *`,
+      [
+        id,
+        input.adminEmail.toLowerCase(),
+        input.name,
+        input.slug,
+        domain,
+        release.image,
+        release.version,
+        encryptSecret(generatePortalEncryptionKey())
+      ]
     )
     await useDatabase().query(
       `INSERT INTO audit_event (id,instance_id,actor_user_id,action,metadata) VALUES ($1,$2,$3,'instance.created',$4::jsonb)`,

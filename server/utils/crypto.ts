@@ -18,3 +18,7 @@ export function decryptSecret(value: string) {
   decipher.setAuthTag(tag!)
   return Buffer.concat([decipher.update(encrypted!), decipher.final()]).toString('utf8')
 }
+
+export function generatePortalEncryptionKey() {
+  return randomBytes(32).toString('base64')
+}

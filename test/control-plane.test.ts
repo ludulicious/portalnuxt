@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { INSTANCE_STATUSES, PROVISIONING_STEPS } from '../shared/control-plane'
 import { portalCreateSchema, portalSlugSchema } from '../shared/portal-validation'
-import { decryptSecret, encryptSecret } from '../server/utils/crypto'
+import { decryptSecret, encryptSecret, generatePortalEncryptionKey } from '../server/utils/crypto'
 import { sanitizeProvisioningError } from '../server/utils/provisioning'
-import { parseCoolifyImageReference, withPortalEncryptionKey } from '../server/utils/coolify-provider'
+import { parseCoolifyImageReference } from '../server/utils/coolify-provider'
 import { portalDatabaseIdentifier, tenantDatabaseUrl } from '../server/utils/shared-postgres-provider'
 
 test('lifecycle and provisioning vocabularies are explicit', () => {
@@ -46,31 +46,10 @@ test('Coolify image references split tags and immutable digests correctly', () =
   )
 })
 
-test('portal encryption key is generated only when it is not configured', () => {
-  const environment = { NODE_ENV: 'production' }
-  const generated = withPortalEncryptionKey(environment, [], () => 'generated-secret')
-  assert.deepEqual(generated, { NODE_ENV: 'production', PORTAL_ENCRYPTION_KEY: 'generated-secret' })
-
-  let generationCount = 0
-  const unchanged = withPortalEncryptionKey(
-    environment,
-    [{ key: 'PORTAL_ENCRYPTION_KEY', value: '', real_value: 'existing-secret' }],
-    () => {
-      generationCount += 1
-      return 'replacement-secret'
-    }
-  )
-  assert.equal(unchanged, environment)
-  assert.equal(generationCount, 0)
-})
-
-test('blank portal encryption keys are replaced', () => {
-  const environment = withPortalEncryptionKey(
-    {},
-    [{ key: 'PORTAL_ENCRYPTION_KEY', value: '   ', real_value: '' }],
-    () => 'generated-secret'
-  )
-  assert.equal(environment.PORTAL_ENCRYPTION_KEY, 'generated-secret')
+test('portal encryption keys match openssl rand -base64 32 output', () => {
+  const encryptionKey = generatePortalEncryptionKey()
+  assert.equal(Buffer.from(encryptionKey, 'base64').byteLength, 32)
+  assert.match(encryptionKey, /^[A-Za-z0-9+/]{43}=$/)
 })
 
 test('portal slugs allow DNS-safe labels and reject ambiguous hyphens', () => {

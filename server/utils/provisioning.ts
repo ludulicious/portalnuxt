@@ -22,13 +22,17 @@ async function claimWork(): Promise<WorkRow | null> {
 }
 
 async function environmentFor(
-  instance: PortalInstance & { encryptedDatabaseUrl: string; encryptedAuthSecret: string }
+  instance: PortalInstance & {
+    encryptedDatabaseUrl: string
+    encryptedAuthSecret: string
+    encryptedPortalEncryptionKey: string | null
+  }
 ) {
   const config = useRuntimeConfig()
   if (!config.resendApiKey || !config.resendFromEmail) {
     throw new Error('Portal email delivery is not configured')
   }
-  return {
+  const environment: Record<string, string> = {
     DATABASE_URL: decryptSecret(instance.encryptedDatabaseUrl),
     BETTER_AUTH_SECRET: decryptSecret(instance.encryptedAuthSecret),
     PUBLIC_URL: `https://${instance.domain}`,
@@ -43,6 +47,10 @@ async function environmentFor(
     PORTAL_GOOGLE_ENABLED: 'false',
     NODE_ENV: 'production'
   }
+  if (instance.encryptedPortalEncryptionKey) {
+    environment.PORTAL_ENCRYPTION_KEY = decryptSecret(instance.encryptedPortalEncryptionKey)
+  }
+  return environment
 }
 
 async function advance(instanceId: string, step: ProvisioningStep) {
@@ -77,8 +85,12 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       [instanceId, uuid]
     )
   } else if (step === 'ENVIRONMENT') {
-    const secrets = await pool.query<{ encrypted_database_url: string; encrypted_auth_secret: string }>(
-      'SELECT encrypted_database_url, encrypted_auth_secret FROM platform_instance WHERE id=$1',
+    const secrets = await pool.query<{
+      encrypted_database_url: string
+      encrypted_auth_secret: string
+      encrypted_portal_encryption_key: string | null
+    }>(
+      'SELECT encrypted_database_url, encrypted_auth_secret, encrypted_portal_encryption_key FROM platform_instance WHERE id=$1',
       [instanceId]
     )
     const row = secrets.rows[0]
@@ -90,7 +102,8 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       await environmentFor(
         Object.assign(instance, {
           encryptedDatabaseUrl: row.encrypted_database_url,
-          encryptedAuthSecret: row.encrypted_auth_secret
+          encryptedAuthSecret: row.encrypted_auth_secret,
+          encryptedPortalEncryptionKey: row.encrypted_portal_encryption_key
         })
       )
     )

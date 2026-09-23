@@ -23,7 +23,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: 'Approve this request before provisioning' })
     }
     await client.query(
-      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7)`,
+      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8)`,
       [
         instanceId,
         input.adminEmail.toLowerCase(),
@@ -31,7 +31,8 @@ export default defineEventHandler(async (event) => {
         input.slug,
         `${input.slug}.${config.portalBaseDomain}`,
         release.image,
-        release.version
+        release.version,
+        encryptSecret(generatePortalEncryptionKey())
       ]
     )
     await client.query(`UPDATE access_request SET status='PROVISIONING',instance_id=$2,updated_at=now() WHERE id=$1`, [

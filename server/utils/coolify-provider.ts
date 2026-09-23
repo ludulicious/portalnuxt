@@ -1,25 +1,4 @@
-import { randomBytes } from 'node:crypto'
 import type { DeploymentProvider, DeploymentSpec } from './providers'
-
-interface CoolifyEnvironmentVariable {
-  key: string
-  value?: string | null
-  real_value?: string | null
-}
-
-export function withPortalEncryptionKey(
-  environment: Record<string, string>,
-  currentEnvironment: CoolifyEnvironmentVariable[],
-  generateSecret = () => randomBytes(32).toString('base64')
-) {
-  const hasEncryptionKey = currentEnvironment.some(
-    (variable) =>
-      variable.key === 'PORTAL_ENCRYPTION_KEY' &&
-      [variable.real_value, variable.value].some((value) => typeof value === 'string' && value.trim().length > 0)
-  )
-
-  return hasEncryptionKey ? environment : { ...environment, PORTAL_ENCRYPTION_KEY: generateSecret() }
-}
 
 interface CoolifyConfig {
   url: string
@@ -109,14 +88,10 @@ export class CoolifyProvider implements DeploymentProvider {
   }
 
   async configure(applicationUuid: string, environment: Record<string, string>) {
-    const currentEnvironment = await this.request<CoolifyEnvironmentVariable[]>(
-      `/applications/${applicationUuid}/envs`
-    )
-    const environmentToConfigure = withPortalEncryptionKey(environment, currentEnvironment)
     await this.request(`/applications/${applicationUuid}/envs/bulk`, {
       method: 'PATCH',
       body: JSON.stringify({
-        data: Object.entries(environmentToConfigure).map(([key, value]) => ({
+        data: Object.entries(environment).map(([key, value]) => ({
           key,
           value,
           is_literal: true,
