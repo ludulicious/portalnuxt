@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { isReleaseTransitionAllowed } from '../../../../shared/release-policy'
 const inputSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('suspend') }),
+  z.object({ action: z.literal('recheck') }),
   z.object({ action: z.literal('upgrade'), version: z.string().min(1).default('latest') }),
   z.object({ action: z.literal('schedule-deletion') })
 ])
@@ -14,7 +15,26 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 404, statusMessage: 'Instance not found' })
   }
   const input = inputSchema.parse(await readBody(event))
-  if (input.action === 'suspend') {
+  let healthCheck: { healthy: boolean; message: string } | undefined
+  if (input.action === 'recheck' && instance.status === 'ACTIVE') {
+    try {
+      const response = await fetch(`https://${instance.domain}/api/health`, { signal: AbortSignal.timeout(8000) })
+      healthCheck = {
+        healthy: response.ok,
+        message: response.ok ? 'Portal is healthy.' : `Portal health check returned HTTP ${response.status}.`
+      }
+    } catch {
+      healthCheck = { healthy: false, message: 'Portal is not reachable. Please try again.' }
+    }
+  } else if (input.action === 'recheck') {
+    const result = await useDatabase().query(
+      `UPDATE platform_instance SET status='QUEUED',health_check_started_at=now(),sanitized_error=NULL,retry_count=0,next_attempt_at=now(),updated_at=now() WHERE id=$1 AND status='ERROR' AND provisioning_step='HEALTH' AND locked_at IS NULL RETURNING id`,
+      [id]
+    )
+    if (!result.rowCount) {
+      throw createError({ statusCode: 409, statusMessage: 'Only a failed health check can be rechecked' })
+    }
+  } else if (input.action === 'suspend') {
     if (instance.coolifyApplicationUuid) {
       await deploymentProvider().stop(instance.coolifyApplicationUuid)
     }
@@ -39,7 +59,14 @@ export default defineEventHandler(async (event) => {
   }
   await useDatabase().query(
     `INSERT INTO audit_event (id,instance_id,actor_user_id,action,metadata) VALUES ($1,$2,$3,$4,$5)`,
-    [randomUUID(), id, session.user.id, `instance.${input.action}`, JSON.stringify(input)]
+    [
+      randomUUID(),
+      id,
+      session.user.id,
+      `instance.${input.action}`,
+      JSON.stringify({ ...input, ...(healthCheck ? { healthCheck } : {}) })
+    ]
   )
-  return findInstance(id)
+  const updated = await findInstance(id)
+  return healthCheck ? { ...updated, healthCheck } : updated
 })

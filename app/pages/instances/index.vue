@@ -64,6 +64,8 @@ const sortOptions = [
 ]
 const { data: releases, refresh: refreshReleases } = await useFetch<PortalRelease[]>('/api/operator/releases')
 const busy = ref('')
+const recheckResult = ref<{ id: string; healthy: boolean; message: string } | null>(null)
+const recheckError = ref<{ id: string; message: string } | null>(null)
 const config = useRuntimeConfig()
 const domainDialogOpen = ref(false)
 const domainTarget = ref<PortalInstance | null>(null)
@@ -278,6 +280,30 @@ async function action(instance: PortalInstance, value: 'suspend' | 'schedule-del
   try {
     await $fetch(`/api/operator/instances/${instance.id}`, { method: 'PATCH', body: { action: value } })
     await refreshInstances()
+  } finally {
+    busy.value = ''
+  }
+}
+async function recheckHealth(instance: PortalInstance) {
+  busy.value = instance.id
+  recheckError.value = null
+  recheckResult.value = null
+  try {
+    const result = await $fetch<{ healthCheck?: { healthy: boolean; message: string } }>(
+      `/api/operator/instances/${instance.id}`,
+      { method: 'PATCH', body: { action: 'recheck' } }
+    )
+    if (result.healthCheck) {
+      recheckResult.value = { id: instance.id, ...result.healthCheck }
+    }
+    await refreshInstances()
+  } catch (error: unknown) {
+    recheckError.value = {
+      id: instance.id,
+      message:
+        (error as { data?: { statusMessage?: string } }).data?.statusMessage ||
+        'The health check could not be restarted. Please try again.'
+    }
   } finally {
     busy.value = ''
   }
@@ -630,12 +656,33 @@ onBeforeUnmount(() => {
               }}</span>
             </div>
           </div>
+          <p
+            v-if="recheckResult?.id === instance.id"
+            class="helper"
+            :class="{ 'helper--error': !recheckResult.healthy }"
+            role="status"
+          >
+            {{ recheckResult.message }}
+          </p>
+          <p v-if="recheckError?.id === instance.id" class="helper helper--error" role="alert">
+            {{ recheckError.message }}
+          </p>
           <div class="form__actions operator-item__actions">
+            <UButton
+              v-if="instance.status === 'ACTIVE' || (instance.status === 'ERROR' && instance.step === 'HEALTH')"
+              color="primary"
+              variant="outline"
+              icon="i-lucide-refresh-cw"
+              :loading="busy === instance.id"
+              :disabled="busy === instance.id"
+              @click="recheckHealth(instance)"
+              >Recheck health</UButton
+            >
             <UButton
               color="primary"
               variant="outline"
               :loading="busy === instance.id || isDeploying(instance)"
-              :disabled="!releaseOptions.length || isDeploying(instance)"
+              :disabled="busy === instance.id || !releaseOptions.length || isDeploying(instance)"
               @click="openDeploymentDialog(instance)"
               >{{
                 isDeploying(instance)
