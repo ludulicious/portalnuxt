@@ -1,15 +1,22 @@
 import { randomUUID } from 'node:crypto'
-import { portalCreateSchema } from '../../../shared/portal-validation'
+import { isPortalDomainReserved, portalCreateSchema } from '../../../shared/portal-validation'
 export default defineEventHandler(async (event) => {
   const session = await requireOperator(event)
-  const input = portalCreateSchema.parse(await readBody(event))
+  const parsed = portalCreateSchema.safeParse(await readBody(event))
+  if (!parsed.success) {
+    throw createError({ statusCode: 422, statusMessage: parsed.error.issues[0]!.message })
+  }
+  const input = parsed.data
   const config = useRuntimeConfig()
   if (!config.portalBaseDomain || !config.portalImage || !config.resendApiKey || !config.resendFromEmail) {
     throw createError({ statusCode: 503, statusMessage: 'Provisioning is not configured' })
   }
+  const domain = input.customDomain || `${input.slug}.${config.portalBaseDomain}`.toLowerCase()
+  if (isPortalDomainReserved(domain, input.slug, String(config.portalBaseDomain))) {
+    throw createError({ statusCode: 409, statusMessage: 'This address is reserved for another portal' })
+  }
   const release = await resolvePortalRelease()
   const id = randomUUID()
-  const domain = `${input.slug}.${config.portalBaseDomain}`
   try {
     const result = await useDatabase().query(
       `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8) RETURNING *`,
@@ -30,7 +37,12 @@ export default defineEventHandler(async (event) => {
         randomUUID(),
         id,
         session.user.id,
-        JSON.stringify({ adminEmail: input.adminEmail.toLowerCase(), version: release.version, image: release.image })
+        JSON.stringify({
+          adminEmail: input.adminEmail.toLowerCase(),
+          domain,
+          version: release.version,
+          image: release.image
+        })
       ]
     )
     return mapInstance(result.rows[0])

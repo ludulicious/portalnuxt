@@ -32,3 +32,22 @@ After provisioning, the configured administrator email is passed through the
 existing `ADMIN_EMAILS` contract. The administrator signs up in the new portal
 and completes portal-local onboarding; branding, modules, themes, and content
 never enter the control-plane database.
+
+## Custom instance domains
+
+Operators can select **Change domain** from an instance's actions menu. Enter a
+hostname such as `portal.example.com` without a scheme or path. The new-instance
+form also accepts an optional custom domain; leaving it blank uses the default
+`<slug>.<PORTAL_BASE_DOMAIN>` address. Point its DNS at
+the instance server first: use a CNAME to the default instance hostname for a
+subdomain, or the server's A/AAAA records for an apex domain. Configure HTTPS on
+the Coolify proxy as for the default instance domains.
+
+Saving queues a redeployment, updates the Coolify domain and the portal's
+`PUBLIC_URL` and `BETTER_AUTH_URL`, then checks HTTPS health at the new address.
+The new domain replaces the previous address; users should sign in again at
+the new URL. Other runtime settings on an existing portal are preserved.
+Domains must be unique across instances. Another instance's default address is
+reserved even when that instance uses a custom domain. The same form can restore
+the instance's default domain. Domain changes are audited and are available when
+an instance is active or provisioning has failed.

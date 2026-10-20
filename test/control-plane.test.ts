@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { INSTANCE_STATUSES, PROVISIONING_STEPS } from '../shared/control-plane'
-import { portalCreateSchema, portalSlugSchema } from '../shared/portal-validation'
+import { portalCreateSchema, portalDomainSchema, portalSlugSchema } from '../shared/portal-validation'
 import { decryptSecret, encryptSecret, generatePortalEncryptionKey } from '../server/utils/crypto'
 import {
   sanitizeProvisioningError,
@@ -59,6 +59,45 @@ test('portal encryption keys match openssl rand -base64 32 output', () => {
 test('environment variables are configured only for portals that have not been deployed', () => {
   assert.equal(shouldConfigureEnvironment(null), true)
   assert.equal(shouldConfigureEnvironment('0.4.2'), false)
+  assert.equal(shouldConfigureEnvironment('0.4.2', true), true)
+})
+
+test('custom domains normalize hostnames and reject URLs, IPs and invalid DNS labels', () => {
+  assert.equal(portalDomainSchema.parse(' Portal.Example.COM '), 'portal.example.com')
+  for (const domain of ['example.com', 'portal.example.co.uk', 'xn--bcher-kva.example']) {
+    assert.equal(portalDomainSchema.safeParse(domain).success, true, domain)
+  }
+  for (const domain of [
+    '',
+    'localhost',
+    'https://example.com',
+    'example.com/path',
+    'example.com:443',
+    'user@example.com',
+    '*.example.com',
+    '127.0.0.1',
+    '[::1]',
+    'bad_label.example.com',
+    '-bad.example.com',
+    'bad-.example.com',
+    'example..com',
+    'example.com.',
+    `${'a'.repeat(64)}.com`,
+    `${'a'.repeat(63)}.${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(63)}.com`
+  ]) {
+    assert.equal(portalDomainSchema.safeParse(domain).success, false, domain)
+  }
+})
+
+test('instance creation accepts an optional custom domain and normalizes it', () => {
+  const input = { name: 'Company', slug: 'company', adminEmail: 'admin@example.com' }
+  assert.equal(portalCreateSchema.parse(input).customDomain, undefined)
+  assert.equal(portalCreateSchema.parse({ ...input, customDomain: '   ' }).customDomain, '')
+  assert.equal(
+    portalCreateSchema.parse({ ...input, customDomain: ' Portal.Example.COM ' }).customDomain,
+    'portal.example.com'
+  )
+  assert.equal(portalCreateSchema.safeParse({ ...input, customDomain: 'https://portal.example.com' }).success, false)
 })
 
 test('deployment status polling does not reconfigure the Coolify application', () => {

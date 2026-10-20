@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { PortalInstance } from '~~/shared/control-plane'
-import { portalCreateSchema } from '~~/shared/portal-validation'
+import { portalCreateSchema, portalDomainInputSchema } from '~~/shared/portal-validation'
 import { isReleaseTransitionAllowed } from '~~/shared/release-policy'
 interface PortalRelease {
   version: string
@@ -64,10 +64,21 @@ const sortOptions = [
 ]
 const { data: releases, refresh: refreshReleases } = await useFetch<PortalRelease[]>('/api/operator/releases')
 const busy = ref('')
+const config = useRuntimeConfig()
+const domainDialogOpen = ref(false)
+const domainTarget = ref<PortalInstance | null>(null)
+const domainForm = reactive({ domain: '' })
+const domainError = ref('')
+const domainBusy = ref(false)
+const defaultDomain = computed(() =>
+  domainTarget.value && config.public.portalBaseDomain
+    ? `${domainTarget.value.slug}.${config.public.portalBaseDomain}`
+    : ''
+)
 const createDialogOpen = ref(false)
 const createBusy = ref(false)
 const createError = ref('')
-const createForm = reactive({ name: '', slug: '', adminEmail: '' })
+const createForm = reactive({ name: '', slug: '', adminEmail: '', customDomain: '' })
 const isRefreshingReleases = ref(false)
 const deploymentDialogOpen = ref(false)
 const deploymentTarget = ref<PortalInstance | null>(null)
@@ -130,7 +141,7 @@ function toggleSortDirection() {
   direction.value = direction.value === 'asc' ? 'desc' : 'asc'
 }
 function openCreateDialog() {
-  Object.assign(createForm, { name: '', slug: '', adminEmail: '' })
+  Object.assign(createForm, { name: '', slug: '', adminEmail: '', customDomain: '' })
   createError.value = ''
   createDialogOpen.value = true
 }
@@ -290,6 +301,12 @@ async function confirmInstanceAction() {
 function instanceActionItems(instance: PortalInstance): DropdownMenuItem[] {
   return [
     {
+      label: 'Change domain',
+      icon: 'i-lucide-globe',
+      disabled: !['ACTIVE', 'ERROR'].includes(instance.status),
+      onSelect: () => openDomainDialog(instance)
+    },
+    {
       label: 'Suspend',
       icon: 'i-lucide-pause',
       disabled: instance.status === 'SUSPENDED',
@@ -303,6 +320,32 @@ function instanceActionItems(instance: PortalInstance): DropdownMenuItem[] {
       onSelect: () => openActionDialog(instance, 'schedule-deletion')
     }
   ]
+}
+function openDomainDialog(instance: PortalInstance) {
+  domainTarget.value = instance
+  domainForm.domain = instance.domain
+  domainError.value = ''
+  domainDialogOpen.value = true
+}
+async function saveDomain() {
+  const instance = domainTarget.value
+  const parsed = portalDomainInputSchema.safeParse(domainForm)
+  if (!instance || !parsed.success || domainBusy.value) {
+    return
+  }
+  domainBusy.value = true
+  domainError.value = ''
+  try {
+    await $fetch(`/api/operator/instances/${instance.id}/domain`, { method: 'PATCH', body: parsed.data })
+    domainDialogOpen.value = false
+    await refreshInstances()
+  } catch (error: unknown) {
+    domainError.value =
+      (error as { data?: { statusMessage?: string } }).data?.statusMessage ||
+      'The domain could not be changed. Please try again.'
+  } finally {
+    domainBusy.value = false
+  }
 }
 function openDeploymentDialog(instance: PortalInstance) {
   deploymentTarget.value = instance
@@ -645,6 +688,52 @@ onBeforeUnmount(() => {
         @update:page="goToPage"
       />
     </section>
+    <UModal
+      v-model:open="domainDialogOpen"
+      :title="`Change domain for ${domainTarget?.name || 'instance'}`"
+      description="Changing the domain redeploys the portal. Its address and sign-in URL will change."
+      :dismissible="!domainBusy"
+    >
+      <template #body>
+        <UForm :state="domainForm" :schema="portalDomainInputSchema" class="instance-create-form" @submit="saveDomain">
+          <UFormField label="Domain name" name="domain" required>
+            <UInput
+              v-model="domainForm.domain"
+              class="w-full"
+              placeholder="portal.example.com"
+              autocomplete="off"
+              :spellcheck="false"
+              :disabled="domainBusy"
+            />
+          </UFormField>
+          <p class="helper">
+            Before saving, point this domain's DNS to the same server as
+            <strong>{{ defaultDomain || domainTarget?.domain }}</strong
+            >. Use a CNAME for a subdomain, or the server's A/AAAA records for a root domain. HTTPS must be available
+            before deployment can complete.
+          </p>
+          <UButton
+            v-if="defaultDomain && domainForm.domain !== defaultDomain"
+            variant="link"
+            :disabled="domainBusy"
+            @click="domainForm.domain = defaultDomain"
+            >Use default domain: {{ defaultDomain }}</UButton
+          >
+          <p v-if="domainError" class="helper helper--error" role="alert">{{ domainError }}</p>
+          <div class="form__actions">
+            <UButton color="neutral" variant="outline" :disabled="domainBusy" @click="domainDialogOpen = false"
+              >Cancel</UButton
+            >
+            <UButton
+              type="submit"
+              :loading="domainBusy"
+              :disabled="domainForm.domain.trim().toLowerCase() === domainTarget?.domain"
+              >Save and redeploy</UButton
+            >
+          </div>
+        </UForm>
+      </template>
+    </UModal>
     <ConfirmationModal
       v-if="createDialogOpen"
       v-model:is-open="createDialogOpen"
@@ -668,6 +757,28 @@ onBeforeUnmount(() => {
             :spellcheck="false"
           />
         </UFormField>
+        <UFormField
+          label="Custom domain (optional)"
+          name="customDomain"
+          :error="
+            createForm.customDomain.trim() &&
+            !portalDomainInputSchema.safeParse({ domain: createForm.customDomain }).success
+              ? 'Enter a hostname such as portal.example.com, without https:// or a path.'
+              : undefined
+          "
+        >
+          <UInput
+            v-model="createForm.customDomain"
+            class="w-full"
+            placeholder="portal.example.com"
+            autocomplete="off"
+            :spellcheck="false"
+          />
+        </UFormField>
+        <p class="helper">
+          Leave blank to use {{ createForm.slug || 'your-slug' }}.{{ config.public.portalBaseDomain }}. For a custom
+          domain, point its DNS to the portal server before provisioning.
+        </p>
         <UFormField label="Tenant administrator" name="adminEmail" required>
           <UInput v-model="createForm.adminEmail" class="w-full" type="email" autocomplete="email" />
         </UFormField>

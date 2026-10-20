@@ -14,7 +14,12 @@ export const sanitizeProvisioningError = (error: unknown) =>
     : 'Provisioning failed'
 class HealthCheckPendingError extends Error {}
 
-export const shouldConfigureEnvironment = (deployedVersion: string | null) => deployedVersion === null
+export const shouldConfigureEnvironment = (deployedVersion: string | null, domainConfigurationPending = false) =>
+  deployedVersion === null || domainConfigurationPending
+export const domainEnvironment = (domain: string) => ({
+  PUBLIC_URL: `https://${domain}`,
+  BETTER_AUTH_URL: `https://${domain}`
+})
 export const shouldEnsureApplicationForDeployment = (deploymentUuid: string | null) => deploymentUuid === null
 
 async function claimWork(): Promise<WorkRow | null> {
@@ -38,8 +43,7 @@ async function environmentFor(
   const environment: Record<string, string> = {
     DATABASE_URL: decryptSecret(instance.encryptedDatabaseUrl),
     BETTER_AUTH_SECRET: decryptSecret(instance.encryptedAuthSecret),
-    PUBLIC_URL: `https://${instance.domain}`,
-    BETTER_AUTH_URL: `https://${instance.domain}`,
+    ...domainEnvironment(instance.domain),
     ADMIN_EMAILS: instance.adminEmail,
     PORTAL_PROVIDER_NAME: instance.name,
     PORTAL_PROVIDER_SLUG: instance.slug,
@@ -88,9 +92,26 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       [instanceId, uuid]
     )
   } else if (step === 'ENVIRONMENT') {
-    if (!shouldConfigureEnvironment(instance.deployedVersion)) {
+    const configuration = await pool.query<{ domain_configuration_pending: boolean }>(
+      'SELECT domain_configuration_pending FROM platform_instance WHERE id=$1',
+      [instanceId]
+    )
+    const domainConfigurationPending = configuration.rows[0]?.domain_configuration_pending === true
+    if (!shouldConfigureEnvironment(instance.deployedVersion, domainConfigurationPending)) {
       await pool.query(
         `UPDATE platform_instance SET provisioning_step='DEPLOYMENT', locked_at=NULL, updated_at=now() WHERE id=$1`,
+        [instanceId]
+      )
+      return
+    }
+    // Existing portals retain their independently managed secrets and configuration.
+    if (instance.deployedVersion !== null && domainConfigurationPending) {
+      if (!instance.coolifyApplicationUuid) {
+        throw new Error('Coolify application is missing')
+      }
+      await deploymentProvider().configure(instance.coolifyApplicationUuid, domainEnvironment(instance.domain))
+      await pool.query(
+        `UPDATE platform_instance SET domain_configuration_pending=false,provisioning_step='DEPLOYMENT',locked_at=NULL,updated_at=now() WHERE id=$1`,
         [instanceId]
       )
       return
@@ -118,7 +139,7 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       )
     )
     await pool.query(
-      `UPDATE platform_instance SET provisioning_step='DEPLOYMENT', locked_at=NULL, updated_at=now() WHERE id=$1`,
+      `UPDATE platform_instance SET domain_configuration_pending=false,provisioning_step='DEPLOYMENT', locked_at=NULL, updated_at=now() WHERE id=$1`,
       [instanceId]
     )
   } else if (step === 'DEPLOYMENT') {
