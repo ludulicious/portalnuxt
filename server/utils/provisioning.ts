@@ -1,5 +1,7 @@
 import { randomBytes, randomUUID } from 'node:crypto'
 import type { PortalInstance, ProvisioningStep } from '../../shared/control-plane'
+import { isDemoEnvironment } from '../../shared/portal-environment'
+import { decodeInstanceEnvironment } from './instance-environment'
 
 interface WorkRow {
   id: string
@@ -34,6 +36,7 @@ async function environmentFor(
     encryptedDatabaseUrl: string
     encryptedAuthSecret: string
     encryptedPortalEncryptionKey: string | null
+    encryptedEnvironmentVariables: string | null
   }
 ) {
   const config = useRuntimeConfig()
@@ -41,6 +44,9 @@ async function environmentFor(
     throw new Error('Portal email delivery is not configured')
   }
   const environment: Record<string, string> = {
+    ...Object.fromEntries(
+      decodeInstanceEnvironment(instance.encryptedEnvironmentVariables).map(({ name, value }) => [name, value])
+    ),
     DATABASE_URL: decryptSecret(instance.encryptedDatabaseUrl),
     BETTER_AUTH_SECRET: decryptSecret(instance.encryptedAuthSecret),
     ...domainEnvironment(instance.domain),
@@ -67,7 +73,12 @@ async function advance(instanceId: string, step: ProvisioningStep) {
     return
   }
   if (step === 'DATABASE') {
-    const resource = await databaseProvider().ensure({ instanceId, slug: instance.slug })
+    const configuration = await pool.query<{ encrypted_environment_variables: string | null }>(
+      'SELECT encrypted_environment_variables FROM platform_instance WHERE id=$1',
+      [instanceId]
+    )
+    const demo = isDemoEnvironment(decodeInstanceEnvironment(configuration.rows[0]?.encrypted_environment_variables))
+    const resource = await databaseProvider().ensure({ instanceId, slug: instance.slug, demo })
     await databaseProvider().validate(resource.databaseUrl)
     await pool.query(
       `UPDATE platform_instance SET database_name=$2, database_role=$3, encrypted_database_url=$4, provisioning_step='SECRETS', locked_at=NULL, updated_at=now() WHERE id=$1`,
@@ -120,8 +131,9 @@ async function advance(instanceId: string, step: ProvisioningStep) {
       encrypted_database_url: string
       encrypted_auth_secret: string
       encrypted_portal_encryption_key: string | null
+      encrypted_environment_variables: string | null
     }>(
-      'SELECT encrypted_database_url, encrypted_auth_secret, encrypted_portal_encryption_key FROM platform_instance WHERE id=$1',
+      'SELECT encrypted_database_url, encrypted_auth_secret, encrypted_portal_encryption_key, encrypted_environment_variables FROM platform_instance WHERE id=$1',
       [instanceId]
     )
     const row = secrets.rows[0]
@@ -134,7 +146,8 @@ async function advance(instanceId: string, step: ProvisioningStep) {
         Object.assign(instance, {
           encryptedDatabaseUrl: row.encrypted_database_url,
           encryptedAuthSecret: row.encrypted_auth_secret,
-          encryptedPortalEncryptionKey: row.encrypted_portal_encryption_key
+          encryptedPortalEncryptionKey: row.encrypted_portal_encryption_key,
+          encryptedEnvironmentVariables: row.encrypted_environment_variables
         })
       )
     )

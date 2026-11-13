@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { AccessRequest } from '~~/shared/access-requests'
+import type { PortalEnvironmentVariable } from '~~/shared/portal-environment'
 import { portalCreateSchema } from '~~/shared/portal-validation'
 const route = useRoute()
 const { data: request, refresh } = await useFetch<AccessRequest>(`/api/operator/access-requests/${route.params.id}`)
@@ -15,7 +16,8 @@ const actionOpen = ref(false),
   provision = reactive({
     name: request.value.organization,
     slug: request.value.preferredSlug || '',
-    adminEmail: request.value.email
+    adminEmail: request.value.email,
+    environmentVariables: [] as PortalEnvironmentVariable[]
   }),
   error = ref('')
 function openAction(value: typeof action.value) {
@@ -40,11 +42,12 @@ async function confirmAction() {
 }
 async function createInstance() {
   const parsed = portalCreateSchema.safeParse(provision)
-  if (!parsed.success) {
+  if (!parsed.success || busy.value) {
     error.value = 'Review the instance details.'
     return
   }
   busy.value = true
+  error.value = ''
   try {
     const instance = await $fetch<{ id: string }>(`/api/operator/access-requests/${route.params.id}/provision`, {
       method: 'POST',
@@ -136,18 +139,40 @@ useSeoMeta({ title: () => request.value?.organization || 'Access request' })
       ><label v-if="action === 'decline'" class="field"
         >Reason included in email <em>Optional</em><textarea v-model="declineReason" rows="4"></textarea></label
     ></ConfirmationModal>
-    <ConfirmationModal
+    <UModal
       v-if="provisionOpen"
-      v-model:is-open="provisionOpen"
+      v-model:open="provisionOpen"
       title="Create dedicated instance?"
       :description="`Confirm the portal details for ${request.organization}.`"
-      confirm-label="Queue provisioning"
-      :loading="busy"
-      @confirm="createInstance"
-      ><div class="form">
-        <label class="field">Instance name<input v-model="provision.name" /></label
-        ><label class="field">Portal slug<input v-model="provision.slug" /></label
-        ><label class="field">Tenant administrator<input v-model="provision.adminEmail" type="email" /></label></div
-    ></ConfirmationModal>
+      :dismissible="!busy"
+    >
+      <template #body>
+        <UForm
+          :state="provision"
+          :schema="portalCreateSchema"
+          novalidate
+          class="instance-create-form"
+          @submit="createInstance"
+        >
+          <UFormField label="Instance name" name="name" required>
+            <UInput v-model="provision.name" class="w-full" />
+          </UFormField>
+          <UFormField label="Portal slug" name="slug" required>
+            <UInput v-model="provision.slug" class="w-full" autocomplete="off" :spellcheck="false" />
+          </UFormField>
+          <UFormField label="Tenant administrator" name="adminEmail" required>
+            <UInput v-model="provision.adminEmail" type="email" class="w-full" />
+          </UFormField>
+          <EnvironmentVariableFields v-model="provision.environmentVariables" :disabled="busy" />
+          <p v-if="error" class="helper helper--error" role="alert">{{ error }}</p>
+          <div class="flex justify-end gap-2">
+            <UButton type="button" color="neutral" variant="ghost" :disabled="busy" @click="provisionOpen = false"
+              >Cancel</UButton
+            >
+            <UButton type="submit" :loading="busy">Queue provisioning</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
   </section>
 </template>
