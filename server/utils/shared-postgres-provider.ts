@@ -10,13 +10,14 @@ export function tenantDatabaseUrl(baseUrl: string, roleName: string, password: s
   url.pathname = `/${databaseName}`
   return url.toString()
 }
-export function portalDatabaseIdentifier(slug: string) {
-  const value = `portal-${slug}`
+export function portalDatabaseIdentifier(slug: string, demo = false) {
+  const suffix = demo ? '_demo' : ''
+  const value = `portal-${slug}${suffix}`
   if (Buffer.byteLength(value, 'utf8') <= 63) {
     return value
   }
   const hash = createHash('sha256').update(slug).digest('hex').slice(0, 8)
-  return `${value.slice(0, 54)}-${hash}`
+  return `${value.slice(0, 54 - suffix.length)}-${hash}${suffix}`
 }
 export class SharedPostgresProvider implements DatabaseProvider {
   constructor(
@@ -34,7 +35,7 @@ export class SharedPostgresProvider implements DatabaseProvider {
   }
   async ensure(spec: DatabaseSpec): Promise<DatabaseResource> {
     const roleName = portalDatabaseIdentifier(spec.slug)
-    const databaseName = roleName
+    const databaseName = portalDatabaseIdentifier(spec.slug, spec.demo)
     const password = randomBytes(24).toString('base64url')
     const pool = new Pool({ connectionString: this.adminUrl, max: 1 })
     try {

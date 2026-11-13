@@ -6,6 +6,7 @@ export interface DatabaseResource {
 export interface DatabaseSpec {
   instanceId: string
   slug: string
+  demo?: boolean
 }
 export interface DatabaseProvider {
   ensure(spec: DatabaseSpec): Promise<DatabaseResource>

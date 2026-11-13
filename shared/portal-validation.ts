@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { portalEnvironmentSchema } from './portal-environment'
 
 export const portalDomainSchema = z
   .string()
@@ -37,6 +38,7 @@ export const portalAdminSchema = z.object({
 })
 
 export const portalCreateSchema = portalDetailsSchema.extend(portalAdminSchema.shape).extend({
+  environmentVariables: portalEnvironmentSchema.default([]),
   customDomain: z
     .string()
     .trim()

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { DropdownMenuItem } from '@nuxt/ui'
 import type { PortalInstance } from '~~/shared/control-plane'
+import type { PortalEnvironmentVariable } from '~~/shared/portal-environment'
 import { portalCreateSchema, portalDomainInputSchema } from '~~/shared/portal-validation'
 import { isReleaseTransitionAllowed } from '~~/shared/release-policy'
 interface PortalRelease {
@@ -80,7 +81,13 @@ const defaultDomain = computed(() =>
 const createDialogOpen = ref(false)
 const createBusy = ref(false)
 const createError = ref('')
-const createForm = reactive({ name: '', slug: '', adminEmail: '', customDomain: '' })
+const createForm = reactive({
+  name: '',
+  slug: '',
+  adminEmail: '',
+  customDomain: '',
+  environmentVariables: [] as PortalEnvironmentVariable[]
+})
 const isRefreshingReleases = ref(false)
 const deploymentDialogOpen = ref(false)
 const deploymentTarget = ref<PortalInstance | null>(null)
@@ -129,7 +136,6 @@ const actionConfirmDisabled = computed(
     (pendingAction.value === 'schedule-deletion' && deleteConfirmationSlug.value !== actionTarget.value.slug)
 )
 const selectedSortLabel = computed(() => sortOptions.find((option) => option.value === sort.value)?.label ?? '')
-const createDisabled = computed(() => !portalCreateSchema.safeParse(createForm).success)
 const sortMenuItems = computed(() => [
   sortOptions.map((option) => ({
     label: option.label,
@@ -143,7 +149,7 @@ function toggleSortDirection() {
   direction.value = direction.value === 'asc' ? 'desc' : 'asc'
 }
 function openCreateDialog() {
-  Object.assign(createForm, { name: '', slug: '', adminEmail: '', customDomain: '' })
+  Object.assign(createForm, { name: '', slug: '', adminEmail: '', customDomain: '', environmentVariables: [] })
   createError.value = ''
   createDialogOpen.value = true
 }
@@ -781,58 +787,66 @@ onBeforeUnmount(() => {
         </UForm>
       </template>
     </UModal>
-    <ConfirmationModal
+    <UModal
       v-if="createDialogOpen"
-      v-model:is-open="createDialogOpen"
+      v-model:open="createDialogOpen"
       title="Provision a new instance"
       description="Enter the portal details. Provisioning starts after confirmation."
-      confirm-label="Provision instance"
-      :loading="createBusy"
-      :confirm-disabled="createDisabled"
-      @confirm="createInstance"
+      :dismissible="!createBusy"
     >
-      <div class="instance-create-form">
-        <UFormField label="Instance name" name="name" required>
-          <UInput v-model="createForm.name" class="w-full" autocomplete="organization" />
-        </UFormField>
-        <UFormField label="Portal slug" name="slug" required>
-          <UInput
-            v-model="createForm.slug"
-            class="w-full"
-            placeholder="example-company"
-            autocomplete="off"
-            :spellcheck="false"
-          />
-        </UFormField>
-        <UFormField
-          label="Custom domain (optional)"
-          name="customDomain"
-          :error="
-            createForm.customDomain.trim() &&
-            !portalDomainInputSchema.safeParse({ domain: createForm.customDomain }).success
-              ? 'Enter a hostname such as portal.example.com, without https:// or a path.'
-              : undefined
-          "
+      <template #body>
+        <UForm
+          :state="createForm"
+          :schema="portalCreateSchema"
+          novalidate
+          class="instance-create-form"
+          @submit="createInstance"
         >
-          <UInput
-            v-model="createForm.customDomain"
-            class="w-full"
-            placeholder="portal.example.com"
-            autocomplete="off"
-            :spellcheck="false"
-          />
-        </UFormField>
-        <p class="helper">
-          Leave blank to use {{ createForm.slug || 'your-slug' }}.{{ config.public.portalBaseDomain }}. For a custom
-          domain, point its DNS to the portal server before provisioning.
-        </p>
-        <UFormField label="Tenant administrator" name="adminEmail" required>
-          <UInput v-model="createForm.adminEmail" class="w-full" type="email" autocomplete="email" />
-        </UFormField>
-        <p v-if="latest" class="helper">Release {{ latest }} will be provisioned.</p>
-        <p v-if="createError" class="helper helper--error" role="alert">{{ createError }}</p>
-      </div>
-    </ConfirmationModal>
+          <UFormField label="Instance name" name="name" required>
+            <UInput v-model="createForm.name" class="w-full" autocomplete="organization" />
+          </UFormField>
+          <UFormField label="Portal slug" name="slug" required>
+            <UInput
+              v-model="createForm.slug"
+              class="w-full"
+              placeholder="example-company"
+              autocomplete="off"
+              :spellcheck="false"
+            />
+          </UFormField>
+          <UFormField label="Custom domain (optional)" name="customDomain">
+            <UInput
+              v-model="createForm.customDomain"
+              class="w-full"
+              placeholder="portal.example.com"
+              autocomplete="off"
+              :spellcheck="false"
+            />
+          </UFormField>
+          <p class="helper">
+            Leave blank to use {{ createForm.slug || 'your-slug' }}.{{ config.public.portalBaseDomain }}. For a custom
+            domain, point its DNS to the portal server before provisioning.
+          </p>
+          <UFormField label="Tenant administrator" name="adminEmail" required>
+            <UInput v-model="createForm.adminEmail" class="w-full" type="email" autocomplete="email" />
+          </UFormField>
+          <EnvironmentVariableFields v-model="createForm.environmentVariables" :disabled="createBusy" />
+          <p v-if="latest" class="helper">Release {{ latest }} will be provisioned.</p>
+          <p v-if="createError" class="helper helper--error" role="alert">{{ createError }}</p>
+          <div class="flex justify-end gap-2">
+            <UButton
+              type="button"
+              color="neutral"
+              variant="ghost"
+              :disabled="createBusy"
+              @click="createDialogOpen = false"
+              >Cancel</UButton
+            >
+            <UButton type="submit" :loading="createBusy">Provision instance</UButton>
+          </div>
+        </UForm>
+      </template>
+    </UModal>
     <ConfirmationModal
       v-if="deploymentTarget"
       v-model:is-open="deploymentDialogOpen"

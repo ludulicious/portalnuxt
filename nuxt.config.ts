@@ -35,5 +35,11 @@ export default defineNuxtConfig({
     }
   },
   nitro: { experimental: { openAPI: true } },
+  vite: {
+    ssr: {
+      // Keep compiler dependencies together so Nitro traces the compatible CJS estree-walker version.
+      external: ['@vue/compiler-core', '@vue/compiler-dom', '@vue/compiler-ssr']
+    }
+  },
   typescript: { strict: true }
 })

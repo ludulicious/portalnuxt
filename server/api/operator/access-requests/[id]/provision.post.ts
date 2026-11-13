@@ -3,8 +3,12 @@ import { portalCreateSchema } from '../../../../../shared/portal-validation'
 
 export default defineEventHandler(async (event) => {
   const session = await requireOperator(event)
-  const id = getRouterParam(event, 'id')!,
-    input = portalCreateSchema.parse(await readBody(event))
+  const id = getRouterParam(event, 'id')!
+  const parsed = portalCreateSchema.safeParse(await readBody(event))
+  if (!parsed.success) {
+    throw createError({ statusCode: 422, statusMessage: parsed.error.issues[0]!.message })
+  }
+  const input = parsed.data
   const config = useRuntimeConfig()
   if (!config.portalBaseDomain || !config.portalImage || !config.resendApiKey || !config.resendFromEmail) {
     throw createError({ statusCode: 503, statusMessage: 'Provisioning is not configured' })
@@ -23,7 +27,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 409, statusMessage: 'Approve this request before provisioning' })
     }
     await client.query(
-      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8)`,
+      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key,encrypted_environment_variables) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8,$9)`,
       [
         instanceId,
         input.adminEmail.toLowerCase(),
@@ -32,7 +36,8 @@ export default defineEventHandler(async (event) => {
         `${input.slug}.${config.portalBaseDomain}`,
         release.image,
         release.version,
-        encryptSecret(generatePortalEncryptionKey())
+        encryptSecret(generatePortalEncryptionKey()),
+        input.environmentVariables.length ? encryptSecret(JSON.stringify(input.environmentVariables)) : null
       ]
     )
     await client.query(`UPDATE access_request SET status='PROVISIONING',instance_id=$2,updated_at=now() WHERE id=$1`, [

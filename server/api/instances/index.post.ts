@@ -19,7 +19,7 @@ export default defineEventHandler(async (event) => {
   const id = randomUUID()
   try {
     const result = await useDatabase().query(
-      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8) RETURNING *`,
+      `INSERT INTO platform_instance (id,admin_email,name,slug,domain,status,provisioning_step,desired_image,desired_version,encrypted_portal_encryption_key,encrypted_environment_variables) VALUES ($1,$2,$3,$4,$5,'QUEUED','DATABASE',$6,$7,$8,$9) RETURNING *`,
       [
         id,
         input.adminEmail.toLowerCase(),
@@ -28,7 +28,8 @@ export default defineEventHandler(async (event) => {
         domain,
         release.image,
         release.version,
-        encryptSecret(generatePortalEncryptionKey())
+        encryptSecret(generatePortalEncryptionKey()),
+        input.environmentVariables.length ? encryptSecret(JSON.stringify(input.environmentVariables)) : null
       ]
     )
     await useDatabase().query(
