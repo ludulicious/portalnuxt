@@ -22,7 +22,7 @@ export function parsePortalImageLocation(value: string) {
   }
   return { location, repository: location.slice('ghcr.io/'.length) }
 }
-async function githubPackagesToken(repository: string, challenge: string | null) {
+async function githubPackagesToken(repository: string, challenge: string | null, signal: AbortSignal) {
   const realm = challenge?.match(/realm="([^"]+)"/)?.[1]
   if (realm !== 'https://ghcr.io/token') {
     throw new Error('Unexpected GHCR authentication endpoint')
@@ -37,7 +37,7 @@ async function githubPackagesToken(repository: string, challenge: string | null)
     throw new Error('GHCR credentials are not configured')
   }
   const authorization = Buffer.from(`${config.registryUsername}:${config.registryToken}`).toString('base64')
-  const response = await fetch(url, { headers: { Authorization: `Basic ${authorization}` } })
+  const response = await fetch(url, { headers: { Authorization: `Basic ${authorization}` }, signal, cache: 'no-store' })
   if (!response.ok) {
     throw new Error(`GHCR authentication failed (${response.status})`)
   }
@@ -47,18 +47,26 @@ async function githubPackagesToken(repository: string, challenge: string | null)
   }
   return body.token
 }
-async function ghcrRequest(repository: string, path: string, init: RequestInit = {}) {
-  const url = `https://ghcr.io/v2/${repository}${path}`
-  let response = await fetch(url, init)
-  if (response.status !== 401) {
+function ghcrClient(repository: string, signal: AbortSignal) {
+  let token: string | undefined
+  return async (path: string, init: RequestInit = {}) => {
+    const url = `https://ghcr.io/v2/${repository}${path}`
+    const headers = new Headers(init.headers)
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`)
+    }
+    let response = await fetch(url, { ...init, headers, signal, cache: 'no-store' })
+    if (response.status !== 401) {
+      return response
+    }
+    token = await githubPackagesToken(repository, response.headers.get('www-authenticate'), signal)
+    headers.set('Authorization', `Bearer ${token}`)
+    response = await fetch(url, { ...init, headers, signal, cache: 'no-store' })
     return response
   }
-  const token = await githubPackagesToken(repository, response.headers.get('www-authenticate'))
-  response = await fetch(url, { ...init, headers: { ...init.headers, Authorization: `Bearer ${token}` } })
-  return response
 }
-async function digestForTag(repository: string, tag: string) {
-  const response = await ghcrRequest(repository, `/manifests/${encodeURIComponent(tag)}`, {
+async function digestForTag(request: ReturnType<typeof ghcrClient>, tag: string) {
+  const response = await request(`/manifests/${encodeURIComponent(tag)}`, {
     method: 'HEAD',
     headers: {
       Accept:
@@ -82,21 +90,51 @@ export async function listPortalReleases(): Promise<PortalRelease[]> {
     .map((row) => ({ version: row.version, image: row.image_digest, discoveredAt: row.discovered_at.toISOString() }))
     .sort((a, b) => comparePortalVersions(b.version, a.version))
 }
-export async function refreshPortalReleases() {
+let releaseRefresh: Promise<PortalRelease[]> | undefined
+export function refreshPortalReleases(): Promise<PortalRelease[]> {
+  if (!releaseRefresh) {
+    releaseRefresh = syncPortalReleases().finally(() => {
+      releaseRefresh = undefined
+    })
+  }
+  return releaseRefresh
+}
+async function syncPortalReleases(): Promise<PortalRelease[]> {
   const { location, repository } = parsePortalImageLocation(String(useRuntimeConfig().portalImage || ''))
-  const response = await ghcrRequest(repository, '/tags/list?n=1000')
-  if (!response.ok) {
-    throw new Error(`Could not list portal releases (${response.status})`)
-  }
-  const { tags = [] } = (await response.json()) as { tags?: string[] }
-  for (const version of tags.filter((tag) => stableVersion.test(tag))) {
-    const digest = await digestForTag(repository, version)
-    await useDatabase().query(
-      `INSERT INTO portal_release (version,image_digest,discovered_at) VALUES ($1,$2,now()) ON CONFLICT (version) DO UPDATE SET image_digest=EXCLUDED.image_digest,discovered_at=now()`,
-      [version, `${location}@${digest}`]
+  const controller = new AbortController()
+  const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(60_000)])
+  const request = ghcrClient(repository, signal)
+  try {
+    const response = await request('/tags/list?n=1000')
+    if (!response.ok) {
+      throw new Error(`Could not list portal releases (${response.status})`)
+    }
+    const { tags = [] } = (await response.json()) as { tags?: string[] | null }
+    const versions = (tags ?? [])
+      .filter((tag) => stableVersion.test(tag))
+      .sort((left, right) => comparePortalVersions(right, left))
+    const resolved = new Map<string, string>()
+    let nextVersion = 0
+    await Promise.all(
+      Array.from({ length: Math.min(4, versions.length) }, async () => {
+        while (nextVersion < versions.length) {
+          signal.throwIfAborted()
+          const version = versions[nextVersion++]!
+          resolved.set(version, await digestForTag(request, version))
+        }
+      })
     )
+    signal.throwIfAborted()
+    for (const [version, digest] of resolved) {
+      await useDatabase().query(
+        `INSERT INTO portal_release (version,image_digest,discovered_at) VALUES ($1,$2,now()) ON CONFLICT (version) DO UPDATE SET image_digest=EXCLUDED.image_digest,discovered_at=now()`,
+        [version, `${location}@${digest}`]
+      )
+    }
+    return await listPortalReleases()
+  } finally {
+    controller.abort()
   }
-  return listPortalReleases()
 }
 export async function resolvePortalRelease(version = 'latest') {
   let releases = await listPortalReleases()
