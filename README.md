@@ -33,6 +33,26 @@ existing `ADMIN_EMAILS` contract. The administrator signs up in the new portal
 and completes portal-local onboarding; branding, modules, themes, and content
 never enter the control-plane database.
 
+## Refreshing portal releases
+
+On **Instances**, the refresh button beside **Add instance** checks GHCR for stable
+releases and refreshes the inventory. Progress and the result appear beneath the
+heading, including the latest available version or a safe error with retry advice.
+Deployment choices update directly from the successful sync; no reload is needed.
+An unchanged catalogue is reported explicitly. If only inventory loading fails,
+the refreshed release choices remain available and the message reports the partial
+failure. Refreshing never deploys or changes an instance's selected image.
+
+Background discovery still runs on startup and every 15 minutes. Concurrent syncs
+share one scan per server process. A scan reuses its GHCR token, resolves up to four
+stable tags concurrently, bypasses request caches, and limits registry work to
+60 seconds. Registry failures leave the saved catalogue untouched; only validated
+immutable digests are stored. Database failures can still leave partial writes.
+The operator-only manual request is not cached or automatically retried, and has
+a 70-second client timeout. Raw registry errors are not shown in the browser.
+Inventory reads have a 15-second timeout and are not automatically retried, so a
+stalled inventory request also finishes with visible failure feedback.
+
 ## Extra instance environment variables
 
 Both **Provision a new instance** and **Create instance** on an approved access

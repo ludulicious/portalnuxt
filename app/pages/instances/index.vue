@@ -63,7 +63,7 @@ const sortOptions = [
   { label: 'Status', value: 'status' },
   { label: 'Deployed version', value: 'version' }
 ]
-const { data: releases, refresh: refreshReleases } = await useFetch<PortalRelease[]>('/api/operator/releases')
+const { data: releases } = await useFetch<PortalRelease[]>('/api/operator/releases')
 const busy = ref('')
 const recheckResult = ref<{ id: string; healthy: boolean; message: string } | null>(null)
 const recheckError = ref<{ id: string; message: string } | null>(null)
@@ -88,7 +88,17 @@ const createForm = reactive({
   customDomain: '',
   environmentVariables: [] as PortalEnvironmentVariable[]
 })
-const isRefreshingReleases = ref(false)
+const { isRefreshingReleases, refreshMessage, refreshFailed, refreshInventory } = useInventoryRefresh({
+  releases,
+  fetchReleases: () =>
+    $fetch<PortalRelease[]>('/api/operator/releases', {
+      query: { refresh: 'true' },
+      cache: 'no-store',
+      retry: 0,
+      timeout: 70_000
+    }),
+  refreshInstances
+})
 const deploymentDialogOpen = ref(false)
 const deploymentTarget = ref<PortalInstance | null>(null)
 const deploymentVersion = ref('')
@@ -209,17 +219,19 @@ function instanceListUrl(page: number) {
 }
 async function loadInstances(page: number, replace: boolean) {
   if (listPending.value) {
-    return
+    return false
   }
   listPending.value = true
   listError.value = ''
   try {
-    const result = await requestFetch<InstanceListResponse>(instanceListUrl(page))
+    const result = await requestFetch<InstanceListResponse>(instanceListUrl(page), { timeout: 15_000, retry: 0 })
     const incoming = replace ? result.items : [...instances.value, ...result.items]
     instances.value = [...new Map(incoming.map((instance) => [instance.id, instance])).values()]
     Object.assign(pagination, result.pagination)
+    return true
   } catch {
     listError.value = 'The infrastructure inventory could not be loaded.'
+    return false
   } finally {
     listPending.value = false
   }
@@ -243,11 +255,14 @@ async function goToPage(page: number) {
   await router.replace({ query: collectionQuery(page) })
 }
 async function refreshInstances() {
-  await loadInstances(1, true)
+  if (!(await loadInstances(1, true))) {
+    return false
+  }
   if (pageFromQuery() !== 1) {
     skipNextRouteLoad = true
     await router.replace({ query: collectionQuery(1) })
   }
+  return true
 }
 function portalUrl(domain: string) {
   return /^https?:\/\//i.test(domain) ? domain : `https://${domain}`
@@ -401,15 +416,6 @@ async function deploy() {
     busy.value = ''
   }
 }
-async function refreshInventory() {
-  isRefreshingReleases.value = true
-  try {
-    await $fetch('/api/operator/releases', { query: { refresh: 'true' } })
-    await Promise.all([refreshReleases(), refreshInstances()])
-  } finally {
-    isRefreshingReleases.value = false
-  }
-}
 let collectionQueryTimer: ReturnType<typeof setTimeout> | undefined
 let syncingControlsFromRoute = false
 watch([search, status, version, sort, direction], () => {
@@ -510,15 +516,20 @@ onBeforeUnmount(() => {
             icon="i-lucide-refresh-cw"
             class="operator-refresh"
             :loading="isRefreshingReleases"
-            :disabled="isRefreshingReleases"
+            :disabled="isRefreshingReleases || listPending"
             aria-label="Refresh inventory"
             @click="refreshInventory"
           />
         </div>
-        <span class="sr-only" aria-live="polite">{{
-          isRefreshingReleases ? 'Refreshing portal inventory and releases' : ''
-        }}</span>
       </header>
+      <p
+        v-if="isRefreshingReleases || refreshMessage"
+        class="operator-list-message"
+        :class="{ 'helper--error': refreshFailed }"
+        :role="refreshFailed ? 'alert' : 'status'"
+      >
+        {{ isRefreshingReleases ? 'Refreshing portal inventory and releases…' : refreshMessage }}
+      </p>
       <div class="operator-controls" aria-label="Inventory controls">
         <UInput
           v-model="search"
